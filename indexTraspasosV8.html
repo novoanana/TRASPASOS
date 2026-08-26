@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRASPASOS · Control semanal</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#718096;--line:#e6ebf2;--accent:#2457ff;--good:#0d9b68;--warn:#d88700;--danger:#d83b45;--shadow:0 14px 38px rgba(31,43,77,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#eef3ff 0,#f7f9fc 40%,#f4f7fb);color:var(--text)}
+.app{max-width:1480px;margin:auto;padding:26px}
+header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:22px}.brand{display:flex;gap:13px;align-items:center}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#2457ff,#6c63ff);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:0 9px 24px rgba(36,87,255,.22)}h1{margin:0;font-size:27px;letter-spacing:-.7px}header p{margin:4px 0 0;color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:11px;font-weight:800;cursor:pointer}.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.danger{color:var(--danger)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.kpi{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:var(--shadow)}.label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:850}.value{font-size:27px;font-weight:950;margin-top:5px}.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.grid{display:grid;grid-template-columns:1.02fr 1.98fr;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:19px;box-shadow:var(--shadow)}.card h2{font-size:16px;margin:0 0 14px}.controls{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:850;color:var(--muted);margin-bottom:6px}.field select,.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fbfcfe;font:inherit;color:var(--text)}
+.weekhead{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:12px}.weektitle{font-size:18px;font-weight:900}.weektitle small{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-top:3px}.weeknav{display:flex;gap:7px}.iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 11px;font-weight:900;cursor:pointer}
+.daygrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.day{padding:12px;border:1px solid var(--line);border-radius:13px;background:#f9fbff}.day.loaded{border-color:#a9dfcb;background:#effbf6}.day.friday{box-shadow:inset 0 0 0 2px #f2c766}.day .top{display:flex;justify-content:space-between;font-weight:850;font-size:12px}.day .date{font-size:17px;font-weight:950;margin-top:5px}.day .qty{font-size:11px;color:var(--muted);margin-top:3px}.drop{margin-top:14px;border:1.5px dashed #b9c5db;border-radius:15px;padding:24px;text-align:center;background:#fafcff;cursor:pointer}.drop strong{display:block;margin-bottom:4px}.drop small{color:var(--muted)}.status{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f6f8fc;font-size:12px}.status.good{background:#eaf9f2;color:#08764d}.status.warn{background:#fff7e5;color:#916000}.status.error{background:#fff0f1;color:#a5222c}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:19px 0 11px}.pill{font-size:10px;padding:5px 8px;border-radius:999px;background:#eef2ff;color:#3650bd;font-weight:850}.search{padding:10px 12px;border:1px solid var(--line);border-radius:10px;min-width:250px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:11px 12px;border-bottom:1px solid var(--line);font-size:12px;text-align:left;white-space:nowrap}th{background:#f8faff;color:#667188;font-size:10px;text-transform:uppercase;letter-spacing:.06em}th.num,td.num{text-align:right}td.total{font-weight:950;background:#fbfcff}.fridayHead{background:#fff8e8!important;color:#946000!important}.fridayCell{background:#fffdf7}.idBadge{display:inline-flex;align-items:center;gap:7px;font-weight:900}.idColor{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.12)}.empty{text-align:center;padding:34px;color:var(--muted)}.audit{margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5}.history{margin-top:16px}.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:11px}.legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}.footer-note{margin-top:12px;font-size:11px;color:var(--muted)}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.app{padding:14px}.kpis{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr}.daygrid{grid-template-columns:1fr 1fr}header{flex-direction:column;align-items:flex-start}.search{min-width:160px}}
+@media print{
+ body{background:#fff}.app{max-width:none;padding:0}header,.kpis,.grid,.toolbar,.history,.footer-note,#statusBox{display:none!important}.card{box-shadow:none;border:0;padding:0}.tablewrap{border:0;overflow:visible}.printHeader{display:block!important;margin-bottom:12px}.legend{margin-top:10px}th,td{font-size:10px;padding:7px 8px}
+}
+.printHeader{display:none}
+
+/* =========================================================
+   PEDIDOS ECONOMATO · VALIDACIÓN
+   ========================================================= */
+.economato-card{margin-top:16px}
+.pending-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.pending-title{font-size:18px;font-weight:950;margin:0}
+.pending-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.pending-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pending-list{display:grid;gap:9px}
+.pending-row{display:grid;grid-template-columns:1.25fr 1.25fr .75fr .75fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:#fbfcff}
+.pending-row:hover{border-color:#c9d5f7}
+.pending-main b{display:block;font-size:13px}
+.pending-main span,.pending-meta span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.pending-meta strong{font-size:13px}
+.pending-status{font-size:10px;font-weight:900;padding:5px 8px;border-radius:999px;background:#fff7e5;color:#916000;display:inline-block}
+.pending-empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed #c9d3e5;border-radius:13px}
+.pending-error{padding:12px;border-radius:10px;background:#fff0f1;color:#a5222c;font-size:12px}
+.detail-panel{margin-top:14px;border:1px solid var(--line);border-radius:15px;background:#fff;overflow:hidden}
+.detail-head{padding:15px 16px;background:#f8faff;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}
+.detail-head h3{margin:0;font-size:16px}
+.detail-head small{display:block;color:var(--muted);margin-top:3px}
+.detail-close{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer;font-weight:900}
+.validation-table{width:100%;border-collapse:collapse}
+.validation-table th,.validation-table td{padding:10px 11px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle}
+.validation-table th{background:#f8faff;color:#667188;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.validation-table td.item-name b{display:block;font-size:12px}
+.validation-table td.item-name span{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.qty-input,.comment-input{width:100%;border:1px solid #ccd5e4;border-radius:9px;background:#fff;padding:8px;font:inherit}
+.qty-input{text-align:center;max-width:82px}
+.comment-input{min-width:180px;min-height:38px;resize:vertical}
+.qty-input:focus,.comment-input:focus{outline:2px solid rgba(36,87,255,.15);border-color:#9db1f7}
+.review-check{width:24px;height:24px;accent-color:var(--good);cursor:pointer}
+.validation-ok{color:var(--good);font-weight:900}
+.validation-pending{color:var(--warn);font-weight:900}
+.validation-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;background:#fbfcff}
+.validation-progress{font-size:12px;color:var(--muted)}
+.validation-progress b{color:var(--text)}
+.validation-note{font-size:11px;color:var(--muted);margin-top:5px}
+.save-draft{font-size:11px;color:var(--good);font-weight:800}
+@media(max-width:850px){
+ .pending-row{grid-template-columns:1fr 1fr;gap:8px}
+ .pending-row .pending-button{grid-column:1/-1}
+ .validation-table{min-width:760px}
+ .detail-panel .tablewrap{overflow:auto}
+ .validation-footer{flex-direction:column;align-items:stretch}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="brand"><div class="logo">T</div><div><h1>TRASPASOS</h1><p>Control semanal de salidas por departamento</p></div></div>
+ <div class="actions"><button class="btn" onclick="printWeek()">🖨️ Imprimir semana</button><button class="btn" onclick="exportCSV()">Exportar CSV</button><button class="btn danger" onclick="clearWeek()">Limpiar semana</button></div>
+</header>
+
+<section class="kpis">
+ <div class="kpi"><div class="label">Total semana</div><div class="value" id="kTotal">0</div><div class="sub">salidas del departamento</div></div>
+ <div class="kpi"><div class="label">Archivos cargados</div><div class="value" id="kFiles">0/5</div><div class="sub">para esta semana</div></div>
+ <div class="kpi"><div class="label">Artículos</div><div class="value" id="kItems">0</div><div class="sub">IDs únicos</div></div>
+ <div class="kpi"><div class="label">Viernes</div><div class="value" id="kFriday">0</div><div class="sub" id="fridaySub">pendiente</div></div>
+</section>
+
+<div class="grid">
+ <div class="card">
+  <h2>Departamento y carga diaria</h2>
+  <div class="controls">
+   <div class="field"><label>Departamento</label><select id="dept">
+    <option>SNACK LA MAREA</option><option>COCINA</option><option>RESTAURANTE</option><option>EL PATIO</option><option>YARABAR</option><option>LAVANDERÍA</option><option>SERVICIO TÉCNICO</option><option>VENTAS</option><option>RECEPCIÓN</option><option>PISOS</option>
+   </select></div>
+   <div class="field"><label>Lunes de la semana</label><input id="weekStart" type="date"></div>
+  </div>
+  <div class="field" style="margin-top:11px"><label>Día</label><select id="day"></select></div>
+  <div class="drop" id="drop"><strong>Subir archivo del día</strong><small>Arrastra el Sheet aquí o haz clic · XLSX, XLS o CSV</small><input id="file" type="file" accept=".xlsx,.xls,.csv" hidden></div>
+  <div id="status" class="status">Listo para cargar.</div>
+  <div class="footer-note">Cada archivo queda vinculado automáticamente a <b>departamento + fecha + día</b>. Si vuelves a cargar el mismo día, se pide confirmación para reemplazarlo.</div>
+ </div>
+
+ <div class="card">
+  <div class="weekhead">
+   <div><div class="weektitle" id="weekTitle">Semana</div><small id="deptPill">SNACK LA MAREA</small></div>
+   <div class="weeknav"><button class="iconbtn" onclick="moveWeek(-7)">‹</button><button class="iconbtn" onclick="goToday()">Esta semana</button><button class="iconbtn" onclick="moveWeek(7)">›</button></div>
+  </div>
+  <div class="daygrid" id="days"></div>
+ </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+ <div class="printHeader"><h1 id="printTitle">TRASPASOS</h1><div id="printWeek"></div></div>
+ <div class="toolbar"><div><h2 style="margin:0">Resumen semanal</h2><span class="pill" id="deptPill2">SNACK LA MAREA</span></div><input class="search" id="search" placeholder="Buscar ID o referencia…"></div>
+ <div class="tablewrap">
+  <table><thead><tr><th>ID</th><th>REFERENCIA</th><th class="num">LUN</th><th class="num">MAR</th><th class="num">MIÉ</th><th class="num">JUE</th><th class="num fridayHead">VIE</th><th class="num">TOTAL</th></tr></thead><tbody id="tbody"></tbody></table>
+ </div>
+ <div class="legend" id="legend"></div>
+ <div class="audit" id="audit"></div>
+</div>
+
+
+<!-- =========================================================
+     PEDIDOS ECONOMATO · VALIDACIÓN
+     ========================================================= -->
+<div class="card economato-card" id="economatoSection">
+  <div class="pending-toolbar">
+    <div>
+      <h2 class="pending-title">Pedidos del Economato</h2>
+      <div class="pending-sub">Pedidos pendientes de revisión y validación</div>
+    </div>
+    <div class="pending-actions">
+      <span class="pill" id="pendingCount">0 pendientes</span>
+      <button class="btn" onclick="loadPendingOrders()">↻ Actualizar pedidos</button>
+    </div>
+  </div>
+
+  <div id="pendingStatus" class="status">Conectando con el backend…</div>
+  <div id="pendingList" class="pending-list" style="margin-top:10px"></div>
+
+  <div id="orderDetail" class="detail-panel" style="display:none">
+    <div class="detail-head">
+      <div>
+        <h3 id="detailTitle">Pedido</h3>
+        <small id="detailSubtitle"></small>
+      </div>
+      <button class="detail-close" onclick="closeOrderDetail()">Cerrar</button>
+    </div>
+
+    <div class="tablewrap" style="border:0;border-radius:0">
+      <table class="validation-table">
+        <thead>
+          <tr>
+            <th>ARTÍCULO</th>
+            <th>SOLICITADO</th>
+            <th>SERVIDO</th>
+            <th>COMENTARIO</th>
+            <th>REVISADO</th>
+          </tr>
+        </thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+
+    <div class="validation-footer">
+      <div>
+        <div class="validation-progress" id="validationProgress">0/0 artículos revisados</div>
+        <div class="validation-note">
+          Marca cada artículo cuando hayas terminado de revisarlo, aunque la cantidad servida sea 0.
+          Los cambios se guardan localmente mientras editas.
+        </div>
+        <div class="save-draft" id="draftStatus"></div>
+      </div>
+      <button class="btn primary" id="validateOrderBtn" onclick="validateCurrentOrder()" disabled>
+        ✓ VALIDAR PEDIDO
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card history">
+ <div class="toolbar"><div><h2 style="margin:0">Histórico</h2><span class="pill">FECHA + DEPARTAMENTO</span></div><input class="search" id="historySearch" placeholder="Buscar departamento o fecha…"></div>
+ <div class="tablewrap"><table><thead><tr><th>DEPARTAMENTO</th><th>SEMANA</th><th>DÍAS</th><th class="num">TOTAL</th><th></th></tr></thead><tbody id="historyBody"></tbody></table></div>
+</div>
+</div>
+
+<script>
+const DAYS=["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES"];
+const DEPARTMENTS=["SNACK LA MAREA","COCINA","RESTAURANTE","EL PATIO","YARABAR","LAVANDERÍA","SERVICIO TÉCNICO","VENTAS","RECEPCIÓN","PISOS"];
+const COLORS=[
+ {min:0,max:999,color:"#20242b",name:"0–999"},
+ {min:1000,max:1999,color:"#3b67d9",name:"1000–1999"},
+ {min:2000,max:2999,color:"#24936f",name:"2000–2999"},
+ {min:3000,max:3999,color:"#e08a22",name:"3000–3999"},
+ {min:4000,max:4999,color:"#7b55c7",name:"4000–4999"},
+ {min:5000,max:5999,color:"#d35b68",name:"5000–5999"},
+ {min:6000,max:6999,color:"#1c8d9e",name:"6000–6999"},
+ {min:7000,max:7999,color:"#b28a17",name:"7000–7999"},
+ {min:8000,max:8999,color:"#6c7280",name:"8000–8999"},
+ {min:9000,max:999999999,color:"#111111",name:"9000+"}
+];
+function normalize(v){return String(v??"").trim()}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function fmt(n){return new Intl.NumberFormat("es-ES",{maximumFractionDigits:2}).format(n)}
+function parseISO(s){let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function shortDate(d){return new Intl.DateTimeFormat("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}).format(d)}
+function longDate(d){return new Intl.DateTimeFormat("es-ES",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(d)}
+function monday(d){d=new Date(d.getFullYear(),d.getMonth(),d.getDate());let n=d.getDay();d.setDate(d.getDate()+(n===0?-6:1-n));return d}
+function weekStart(){return document.getElementById("weekStart").value||iso(monday(new Date()))}
+function dept(){return document.getElementById("dept").value}
+function storageKey(d=dept(),w=weekStart()){return "TRASPASOS_WEEK|"+d+"|"+w}
+function load(){try{return JSON.parse(localStorage.getItem(storageKey())||"{}")}catch(e){return {}}}
+function save(x){localStorage.setItem(storageKey(),JSON.stringify(x))}
+function colorFor(id){
+ const n=Number(String(id).replace(/\D/g,"")); if(!Number.isFinite(n))return "#6c7280";
+ return (COLORS.find(c=>n>=c.min&&n<=c.max)||COLORS[COLORS.length-1]).color;
+}
+function setupWeek(){
+ const input=document.getElementById("weekStart"); if(!input.value)input.value=iso(monday(new Date()));
+ const st=parseISO(input.value), end=new Date(st.getFullYear(),st.getMonth(),st.getDate()+4);
+ document.getElementById("weekTitle").textContent=`${shortDate(st)} → ${shortDate(end)}`;
+ document.getElementById("printTitle").textContent=`TRASPASOS · ${dept()}`;
+ document.getElementById("printWeek").textContent=`Semana: ${shortDate(st)} – ${shortDate(end)}`;
+ document.getElementById("deptPill").textContent=dept();document.getElementById("deptPill2").textContent=dept();
+ const d=load();
+ document.getElementById("day").innerHTML=DAYS.map((x,i)=>{let dt=new Date(st.getFullYear(),st.getMonth(),st.getDate()+i);return `<option value="${x}">${x} · ${shortDate(dt)}</option>`}).join("");
+ document.getElementById("days").innerHTML=DAYS.map((x,i)=>{let dt=new Date(st.getFullYear(),st.getMonth(),st.getDate()+i);return `<div class="day ${d[x]?"loaded":""} ${x==="VIERNES"?"friday":""}"><div class="top"><span>${x}</span><span>${d[x]?"✓":"—"}</span></div><div class="date">${shortDate(dt)}</div><div class="qty">${d[x]?fmt((d[x].rows||[]).reduce((s,r)=>s+r.qty,0))+" unidades":"Sin cargar"}</div></div>`}).join("");
+}
+function setStatus(t,c=""){let s=document.getElementById("status");s.className="status "+c;s.textContent=t}
+function parseRows(rows){
+ if(!rows.length)throw Error("El archivo está vacío.");
+ const h=rows[0].map(x=>normalize(x).toUpperCase());
+ const id=h.findIndex(x=>x==="ID"||x.startsWith("ID"));
+ const ref=h.findIndex(x=>x==="REFERENCIA"||x.startsWith("REFERENCIA"));
+ const qty=h.findIndex(x=>x==="CANTIDAD"||x==="TOTAL"||x.startsWith("CANTIDAD")||x.startsWith("TOTAL"));
+ if(id<0||ref<0||qty<0)throw Error("No encuentro las columnas ID, REFERENCIA y CANTIDAD/TOTAL.");
+ const out=[];
+ for(let i=1;i<rows.length;i++){let r=rows[i];if(r.every(x=>normalize(x)===""))continue;let ident=normalize(r[id]),refv=normalize(r[ref]),q=Number(r[qty]);if(!ident||!refv)continue;if(!Number.isFinite(q))throw Error("Cantidad no válida en la fila "+(i+1)+".");out.push({id:ident,ref:refv,qty:q})}
+ if(!out.length)throw Error("No se encontraron líneas válidas.");return out;
+}
+function readFile(file){
+ const reader=new FileReader();
+ reader.onload=e=>{try{
+  const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"}),ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:""})),d=load(),day=document.getElementById("day").value;
+  if(d[day]&&!confirm(`Ya existe un archivo para ${day} en ${shortDate(parseISO(weekStart()))}. ¿Quieres reemplazarlo?`)){setStatus("Carga cancelada. El archivo anterior sigue intacto.","warn");return}
+  d[day]={file:file.name,loadedAt:new Date().toISOString(),rows};save(d);setStatus(`✓ ${day} cargado correctamente · ${rows.length} líneas.`,"good");render();
+ }catch(err){setStatus("Error: "+err.message,"error")}};
+ reader.readAsArrayBuffer(file);
+}
+function aggregate(d){
+ const map=new Map(),daily={};DAYS.forEach(x=>daily[x]=0);
+ DAYS.forEach(day=>(d[day]?.rows||[]).forEach(x=>{daily[day]+=x.qty;if(!map.has(x.id))map.set(x.id,{id:x.id,ref:x.ref,total:0,days:{}});let m=map.get(x.id);m.days[day]=(m.days[day]||0)+x.qty;m.total+=x.qty;m.ref=x.ref}));
+ return {items:[...map.values()].sort((a,b)=>{let na=Number(a.id),nb=Number(b.id);if(Number.isFinite(na)&&Number.isFinite(nb))return na-nb;return String(a.id).localeCompare(String(b.id),undefined,{numeric:true})}),daily};
+}
+function render(){
+ setupWeek();const d=load(),a=aggregate(d),total=Object.values(a.daily).reduce((s,x)=>s+x,0);
+ document.getElementById("kTotal").textContent=fmt(total);document.getElementById("kFiles").textContent=DAYS.filter(x=>d[x]).length+"/5";document.getElementById("kItems").textContent=a.items.length;document.getElementById("kFriday").textContent=fmt(a.daily.VIERNES);document.getElementById("fridaySub").textContent=d.VIERNES?"✓ archivo cargado":"pendiente";
+ const q=document.getElementById("search").value.trim().toLowerCase(),rows=a.items.filter(x=>x.id.toLowerCase().includes(q)||x.ref.toLowerCase().includes(q));
+ document.getElementById("tbody").innerHTML=rows.length?rows.map(x=>`<tr><td><span class="idBadge"><i class="idColor" style="background:${colorFor(x.id)}"></i>${esc(x.id)}</span></td><td><b>${esc(x.ref)}</b></td>${DAYS.map((day,i)=>`<td class="num ${day==="VIERNES"?"fridayCell":""}">${x.days[day]?fmt(x.days[day]):"—"}</td>`).join("")}<td class="num total">${fmt(x.total)}</td></tr>`).join(""):`<tr><td colspan="8" class="empty">No hay artículos que mostrar.</td></tr>`;
+ document.getElementById("legend").innerHTML=COLORS.map(c=>`<span><i style="background:${c.color}"></i>${c.name}</span>`).join("");
+ const sumItems=a.items.reduce((s,x)=>s+x.total,0),ok=sumItems===total,friday=d.VIERNES?`Viernes: <b>${fmt(a.daily.VIERNES)}</b> unidades.`:"<b>Viernes pendiente.</b>";
+ document.getElementById("audit").innerHTML=`Semana <b>${shortDate(parseISO(weekStart()))} – ${shortDate(new Date(parseISO(weekStart()).getFullYear(),parseISO(weekStart()).getMonth(),parseISO(weekStart()).getDate()+4))}</b> · ${ok?"✓ Control correcto":"⚠ Revisar datos"} · Suma artículos: <b>${fmt(sumItems)}</b> · Suma días: <b>${fmt(total)}</b> · ${friday}`;
+ renderHistory();
+}
+function listHistory(){
+ const out=[];
+ for(let i=0;i<localStorage.length;i++){let k=localStorage.key(i);if(!k||!k.startsWith("TRASPASOS_WEEK|"))continue;let p=k.split("|");if(p.length!==3)continue;try{let d=JSON.parse(localStorage.getItem(k)||"{}"),a=aggregate(d);out.push({key:k,dept:p[1],week:p[2],days:DAYS.filter(x=>d[x]).length,total:Object.values(a.daily).reduce((s,x)=>s+x,0)})}catch(e){}}
+ return out.sort((a,b)=>b.week.localeCompare(a.week)||a.dept.localeCompare(b.dept));
+}
+function renderHistory(){
+ const q=(document.getElementById("historySearch").value||"").toLowerCase().trim(),rows=listHistory().filter(x=>x.dept.toLowerCase().includes(q)||x.week.includes(q)||shortDate(parseISO(x.week)).includes(q));
+ document.getElementById("historyBody").innerHTML=rows.length?rows.map(x=>`<tr><td><b>${esc(x.dept)}</b></td><td>${esc(shortDate(parseISO(x.week)))} → ${esc(shortDate(new Date(parseISO(x.week).getFullYear(),parseISO(x.week).getMonth(),parseISO(x.week).getDate()+4)))}</td><td>${x.days}/5</td><td class="num total">${fmt(x.total)}</td><td><button class="btn" onclick="openHistory(${JSON.stringify(x.key)})">Abrir</button></td></tr>`).join(""):`<tr><td colspan="5" class="empty">Todavía no hay semanas guardadas en este navegador.</td></tr>`;
+}
+function openHistory(k){let p=k.split("|");document.getElementById("dept").value=p[1];document.getElementById("weekStart").value=p[2];render();window.scrollTo({top:0,behavior:"smooth"})}
+function moveWeek(n){let d=parseISO(weekStart());d.setDate(d.getDate()+n);document.getElementById("weekStart").value=iso(monday(d));render()}
+function goToday(){document.getElementById("weekStart").value=iso(monday(new Date()));render()}
+function clearWeek(){if(confirm(`¿Borrar todos los archivos de ${dept()} de la semana seleccionada?`)){localStorage.removeItem(storageKey());render();setStatus("Semana limpiada.")}}
+function exportCSV(){let d=load(),a=aggregate(d),st=parseISO(weekStart()),csv="DEPARTAMENTO;FECHA_INICIO;ID;REFERENCIA;LUN;MAR;MIÉ;JUE;VIE;TOTAL\n";a.items.forEach(x=>csv+=`${dept()};${iso(st)};${x.id};"${x.ref.replaceAll('"','""')}";${x.days.LUNES||0};${x.days.MARTES||0};${x.days.MIERCOLES||0};${x.days.JUEVES||0};${x.days.VIERNES||0};${x.total}\n`);let blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(blob),aEl=document.createElement("a");aEl.href=u;aEl.download=`TRASPASOS_${dept().replaceAll(" ","_")}_${iso(st)}.csv`;aEl.click();URL.revokeObjectURL(u)}
+function printWeek(){window.print()}
+document.getElementById("drop").onclick=()=>document.getElementById("file").click();
+document.getElementById("file").onchange=e=>{if(e.target.files[0])readFile(e.target.files[0]);e.target.value=""};
+document.getElementById("drop").ondragover=e=>{e.preventDefault();document.getElementById("drop").style.borderColor="var(--accent)"};
+document.getElementById("drop").ondragleave=()=>document.getElementById("drop").style.borderColor="";
+document.getElementById("drop").ondrop=e=>{e.preventDefault();document.getElementById("drop").style.borderColor="";if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0])};
+document.getElementById("dept").onchange=()=>{document.getElementById("weekStart").value=iso(monday(parseISO(weekStart())));render()};
+document.getElementById("weekStart").onchange=()=>{document.getElementById("weekStart").value=iso(monday(parseISO(document.getElementById("weekStart").value)));render()};
+document.getElementById("search").oninput=render;document.getElementById("historySearch").oninput=renderHistory;
+
+/* =========================================================
+   PEDIDOS ECONOMATO · VALIDACIÓN
+   =========================================================
+   Configura BACKEND_URL con la URL /exec del backend GAS.
+   Acciones usadas:
+     PEDIDOS_PENDIENTES
+     DETALLE_PEDIDO
+     VALIDAR_PEDIDO
+   ========================================================= */
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxn3r8myJMkDQ3mxbH0xlrPHkY36RQyy1kfwGe0Jp7iodznHti_5Xy2C70nMjBzpAI/exec";
+
+let pendingOrders = [];
+let currentOrder = null;
+let currentDetail = [];
+let currentDraft = null;
+
+function validationStorageKey(pedidoId){
+  return "TRASPASOS_VALIDACION|" + String(pedidoId || "").trim();
+}
+function loadValidationDraft(pedidoId){
+  try{
+    const raw=localStorage.getItem(validationStorageKey(pedidoId));
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveValidationDraft(){
+  if(!currentOrder || !currentDraft) return;
+  localStorage.setItem(validationStorageKey(currentOrder.pedidoId),JSON.stringify(currentDraft));
+  const el=document.getElementById("draftStatus");
+  if(el) el.textContent="✓ Cambios guardados en este dispositivo";
+}
+function clearValidationDraft(pedidoId){
+  localStorage.removeItem(validationStorageKey(pedidoId));
+}
+function setPendingStatus(text,cls=""){
+  const el=document.getElementById("pendingStatus");
+  el.className="status "+cls;
+  el.textContent=text;
+}
+async function backendPost(payload){
+  if(!BACKEND_URL || BACKEND_URL.includes("PEGA_AQUI")){
+    throw new Error("Falta configurar BACKEND_URL con la URL /exec del backend.");
+  }
+  const response=await fetch(BACKEND_URL,{
+    method:"POST",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify(payload)
+  });
+  const text=await response.text();
+  let data;
+  try{data=JSON.parse(text)}catch(e){throw new Error("El backend no devolvió JSON válido.")}
+  if(!data || data.ok!==true) throw new Error(data?.error || "El backend devolvió un error.");
+  return data;
+}
+function formatBackendDate(value){
+  if(!value) return "";
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime())) return String(value);
+  return new Intl.DateTimeFormat("es-ES",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(d);
+}
+async function loadPendingOrders(){
+  const list=document.getElementById("pendingList");
+  list.innerHTML='<div class="pending-empty">Cargando pedidos pendientes…</div>';
+  document.getElementById("pendingCount").textContent="Cargando…";
+  try{
+    const data=await backendPost({accion:"PEDIDOS_PENDIENTES"});
+    pendingOrders=Array.isArray(data.pedidos)?data.pedidos:[];
+    renderPendingOrders();
+    setPendingStatus(pendingOrders.length?"✓ Pedidos pendientes cargados.":"No hay pedidos pendientes.","good");
+  }catch(error){
+    pendingOrders=[];
+    document.getElementById("pendingCount").textContent="0 pendientes";
+    list.innerHTML=`<div class="pending-error">${esc(error.message)}</div>`;
+    setPendingStatus("No se pudieron cargar los pedidos.","error");
+  }
+}
+function renderPendingOrders(){
+  const list=document.getElementById("pendingList");
+  document.getElementById("pendingCount").textContent=`${pendingOrders.length} ${pendingOrders.length===1?"pendiente":"pendientes"}`;
+  if(!pendingOrders.length){
+    list.innerHTML='<div class="pending-empty">No hay pedidos pendientes de validar.</div>';
+    return;
+  }
+  list.innerHTML=pendingOrders.map(p=>{
+    const id=esc(p.pedidoId||"");
+    const depto=esc(p.departamento||"");
+    const fecha=formatBackendDate(p.fecha);
+    const total=fmt(Number(p.totalSolicitado)||0);
+    const servido=fmt(Number(p.totalServido)||0);
+    const safeId=String(p.pedidoId||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    return `
+      <div class="pending-row">
+        <div class="pending-main"><b>${id}</b><span>${depto}</span></div>
+        <div class="pending-meta"><strong>${fecha}</strong><span>${esc(p.estado||"PENDIENTE")}</span></div>
+        <div class="pending-meta"><strong>${total}</strong><span>solicitado</span></div>
+        <div class="pending-meta"><strong>${servido}</strong><span>servido hasta ahora</span></div>
+        <button class="btn primary pending-button" onclick="openOrderDetail('${safeId}')">ABRIR PEDIDO</button>
+      </div>`;
+  }).join("");
+}
+async function openOrderDetail(pedidoId){
+  const panel=document.getElementById("orderDetail");
+  const body=document.getElementById("detailBody");
+  panel.style.display="block";
+  body.innerHTML='<tr><td colspan="5" class="empty">Cargando detalle…</td></tr>';
+  panel.scrollIntoView({behavior:"smooth",block:"start"});
+  try{
+    const data=await backendPost({accion:"DETALLE_PEDIDO",pedidoId:pedidoId});
+
+    // El backend puede devolver el pedido directamente o dentro de
+    // data.pedido / data.resultado. Normalizamos las tres formas.
+    const pedidoData =
+      data?.pedido ||
+      data?.resultado ||
+      data;
+
+    currentOrder = pedidoData?.pedido || pedidoData || {
+      pedidoId:pedidoId,
+      departamento:""
+    };
+
+    currentDetail =
+      Array.isArray(pedidoData?.lineas) ? pedidoData.lineas :
+      Array.isArray(data?.lineas) ? data.lineas :
+      Array.isArray(data?.pedido?.lineas) ? data.pedido.lineas :
+      [];
+    const saved=loadValidationDraft(pedidoId);
+    const oldDraftLines=Array.isArray(saved?.lineas)?saved.lineas:[];
+    currentDraft={
+      pedidoId:pedidoId,
+      lineas:currentDetail.map((linea,index)=>{
+        const old =
+          oldDraftLines.find(x =>
+            String(x.idArticulo)===String(linea.idArticulo) &&
+            Number(x.index)===index
+          ) ||
+          oldDraftLines.find(x =>
+            String(x.idArticulo)===String(linea.idArticulo)
+          );
+
+        return {
+          index:index,
+          idArticulo:linea.idArticulo,
+          cantidadServida:old
+            ? Number(old.cantidadServida)||0
+            : Number(linea.cantidadServida)||0,
+          comentarioValidacion:old
+            ? String(old.comentarioValidacion||"")
+            : String(linea.comentarioValidacion||""),
+          revisado:old ? old.revisado===true : false
+        };
+      })
+    };
+
+    // Guardamos inmediatamente el estado reconstruido. Así, si se cierra
+    // la app después de abrir el pedido, el borrador queda disponible.
+    saveValidationDraft();
+    if(!currentDetail.length){
+      console.warn("DETALLE_PEDIDO devolvió el pedido pero no se encontraron líneas:", data);
+    }
+
+    renderOrderDetail();
+  }catch(error){
+    body.innerHTML=`<tr><td colspan="5" class="empty">${esc(error.message)}</td></tr>`;
+    document.getElementById("draftStatus").textContent="";
+  }
+}
+function renderOrderDetail(){
+  if(!currentOrder) return;
+  document.getElementById("detailTitle").textContent=`Pedido ${currentOrder.pedidoId||""}`;
+  document.getElementById("detailSubtitle").textContent=`${currentOrder.departamento||""} · ${formatBackendDate(currentOrder.fecha)}`;
+  if(!currentDetail.length){
+    document.getElementById("detailBody").innerHTML =
+      '<tr><td colspan="5" class="empty">El pedido se ha cargado, pero el backend no devolvió líneas de detalle.</td></tr>';
+    updateValidationProgress();
+    return;
+  }
+
+  document.getElementById("detailBody").innerHTML=currentDetail.map((linea,index)=>{
+    const draft=currentDraft.lineas[index], revisado=!!draft.revisado;
+    return `
+      <tr>
+        <td class="item-name"><b>${esc(linea.referencia||"")}</b><span>${esc(linea.categoria||"")} · ID ${esc(linea.idArticulo||"")}</span></td>
+        <td class="num"><b>${fmt(Number(linea.cantidadSolicitada)||0)}</b></td>
+        <td><input class="qty-input" type="number" min="0" step="1" value="${Number(draft.cantidadServida)||0}" onchange="updateServed(${index},this.value)" oninput="updateServed(${index},this.value)"></td>
+        <td><textarea class="comment-input" placeholder="Comentario para este artículo…" onchange="updateValidationComment(${index},this.value)" oninput="updateValidationComment(${index},this.value)">${esc(draft.comentarioValidacion||"")}</textarea></td>
+        <td style="text-align:center"><input class="review-check" type="checkbox" ${revisado?"checked":""} onchange="toggleReviewed(${index},this.checked)" title="Marcar artículo como revisado"></td>
+      </tr>`;
+  }).join("");
+  updateValidationProgress();
+}
+function updateServed(index,value){
+  if(!currentDraft?.lineas?.[index]) return;
+  let n=Number(value); if(!Number.isFinite(n)||n<0)n=0; n=Math.floor(n);
+  currentDraft.lineas[index].cantidadServida=n; saveValidationDraft();
+}
+function updateValidationComment(index,value){
+  if(!currentDraft?.lineas?.[index]) return;
+  currentDraft.lineas[index].comentarioValidacion=String(value||""); saveValidationDraft();
+}
+function toggleReviewed(index,checked){
+  if(!currentDraft?.lineas?.[index]) return;
+  currentDraft.lineas[index].revisado=!!checked; saveValidationDraft(); updateValidationProgress();
+}
+function updateValidationProgress(){
+  if(!currentDraft) return;
+  const total=currentDraft.lineas.length, reviewed=currentDraft.lineas.filter(x=>x.revisado).length;
+  const complete=total>0&&reviewed===total;
+  document.getElementById("validationProgress").innerHTML=
+    `<b>${reviewed}/${total}</b> artículos revisados · `+
+    (complete?`<span class="validation-ok">✓ Todos revisados</span>`:`<span class="validation-pending">Pendientes: ${total-reviewed}</span>`);
+  const button=document.getElementById("validateOrderBtn");
+  button.disabled=!complete;
+}
+async function validateCurrentOrder(){
+  if(!currentOrder||!currentDraft) return;
+  const total=currentDraft.lineas.length, reviewed=currentDraft.lineas.filter(x=>x.revisado).length;
+  if(total===0||reviewed!==total){alert("Debes revisar todos los artículos antes de validar el pedido.");return;}
+  const button=document.getElementById("validateOrderBtn");
+
+  // Último guardado local antes de enviar al backend.
+  saveValidationDraft();
+
+  button.disabled=true; button.textContent="VALIDANDO…";
+  try{
+    const lineas=currentDetail.map((linea,index)=>({
+      idArticulo:linea.idArticulo,
+      referencia:linea.referencia,
+      cantidadServida:Number(currentDraft.lineas[index].cantidadServida)||0,
+      comentarioValidacion:String(currentDraft.lineas[index].comentarioValidacion||""),
+      revisado:true
+    }));
+    const data=await backendPost({accion:"VALIDAR_PEDIDO",pedidoId:currentOrder.pedidoId,lineas:lineas});
+    clearValidationDraft(currentOrder.pedidoId);
+    alert(`✓ Pedido ${currentOrder.pedidoId} validado correctamente.\n\nEl departamento ya puede recibir la confirmación.`);
+    currentOrder=null; currentDetail=[]; currentDraft=null;
+    document.getElementById("orderDetail").style.display="none";
+    await loadPendingOrders();
+    if(data) setPendingStatus("✓ Pedido validado correctamente.","good");
+  }catch(error){
+    button.disabled=false; button.textContent="✓ VALIDAR PEDIDO";
+    saveValidationDraft(); alert("No se pudo validar el pedido:\n\n"+error.message);
+  }
+}
+function closeOrderDetail(){
+  document.getElementById("orderDetail").style.display="none";
+  currentOrder=null; currentDetail=[]; currentDraft=null;
+}
+
+
+document.getElementById("weekStart").value=iso(monday(new Date()));render();
+loadPendingOrders();
+</script>
+</body>
+</html>
