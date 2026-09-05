@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRASPASOS · Agrupador semanal</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#70809a;--line:#e4eaf3;--blue:#2f5bff;--green:#13966f;--red:#e04455;--shadow:0 14px 40px rgba(31,52,86,.08)}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#eef3fb 0,#f8faff 45%,#f3f6fb 100%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1320px;margin:0 auto;padding:28px}
+header{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:22px}
+h1{margin:0;font-size:32px;letter-spacing:-1px}.sub{color:var(--muted);margin-top:7px}
+.week{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 18px;box-shadow:var(--shadow);font-weight:800}.week small{display:block;color:var(--muted);font-weight:600;margin-bottom:4px}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px}
+h2{font-size:18px;margin:0 0 14px} h3{font-size:15px;margin:0 0 10px}
+.depts{display:grid;gap:9px}.dept{border:1px solid var(--line);background:#fbfcff;border-radius:14px;padding:13px 14px;cursor:pointer;font-weight:850;display:flex;justify-content:space-between;align-items:center}.dept.active{border-color:#9eb0ff;background:#eef2ff;color:#2148d9}.badge{font-size:11px;background:#edf1f7;color:#61718c;border-radius:999px;padding:4px 8px}.active .badge{background:#dbe3ff;color:#2148d9}
+.drop{border:2px dashed #b8c6e2;border-radius:18px;padding:34px 20px;text-align:center;background:#fbfdff;cursor:pointer}.drop strong{display:block;font-size:20px;margin-bottom:7px}.drop span{color:var(--muted)}input[type=file]{display:none}
+.files{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0}.file{border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:800;background:#fafcff}.actions{display:flex;gap:10px;margin-top:14px}.btn{border:0;border-radius:13px;padding:13px 18px;font-weight:850;cursor:pointer;font-size:14px}.primary{background:var(--blue);color:white;flex:1}.secondary{background:white;color:var(--red);border:1px solid #e4d5d8}.status{padding:12px 14px;border-radius:12px;margin-top:12px;font-weight:750;font-size:13px}.ok{background:#eaf9f3;color:#087653}.warn{background:#fff6df;color:#8b6200}.err{background:#fff0f2;color:#b5293a}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}.stat{border:1px solid var(--line);border-radius:15px;padding:13px}.stat b{font-size:25px;display:block}.stat small{color:var(--muted);font-weight:700}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:16px 0}.search{border:1px solid var(--line);border-radius:12px;padding:11px 13px;width:270px;font-size:13px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:15px}.table{width:100%;border-collapse:collapse;min-width:780px}.table th{background:#f7f9fd;color:#687892;text-transform:uppercase;font-size:10px;letter-spacing:.6px;text-align:left;padding:11px;border-bottom:1px solid var(--line)}.table td{padding:11px;border-bottom:1px solid var(--line);font-size:13px}.table tr:last-child td{border-bottom:0}.ref{font-weight:850}.muted{color:var(--muted);font-size:11px}.qty{font-weight:900;text-align:right}.daycell{white-space:nowrap}.pill{display:inline-block;background:#f0f3f9;border-radius:8px;padding:4px 6px;font-size:11px;font-weight:800;margin:2px}
+.notice{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.5}.empty{padding:35px;text-align:center;color:var(--muted)}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start;flex-direction:column}.week{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div><h1>TRASPASOS</h1><div class="sub">Agrupador semanal de pedidos por departamento</div></div>
+<div class="week"><small>SEMANA DETECTADA</small><span id="weekLabel">Sin archivos</span></div>
+</header>
+
+<div class="grid">
+<aside class="card">
+<h2>1. Departamento</h2>
+<div class="depts" id="depts"></div>
+<div class="notice">Selecciona un departamento y sube juntos los Excel del periodo. El nombre del archivo identifica el departamento; el nombre de cada pestaña se conserva como subcategoría/punto de recogida.</div>
+</aside>
+
+<main>
+<div class="card">
+<h2>2. Subir archivos del departamento</h2>
+<div class="drop" id="drop"><strong>Seleccionar Excel</strong><span>Admite varios archivos a la vez · XLSX, XLS, CSV</span></div>
+<input id="files" type="file" multiple accept=".xlsx,.xls,.csv">
+<div class="files" id="filesList"></div>
+<div class="actions"><button class="btn primary" id="process">Analizar y agrupar semana</button><button class="btn secondary" id="clear">Limpiar</button></div>
+<div id="status"></div>
+</div>
+
+<div class="card" style="margin-top:20px">
+<h2>3. Resumen semanal</h2>
+<div class="stats">
+<div class="stat"><b id="sItems">0</b><small>artículos</small></div>
+<div class="stat"><b id="sUnits">0</b><small>unidades numéricas</small></div>
+<div class="stat"><b id="sDays">0</b><small>días detectados</small></div>
+<div class="stat"><b id="sSheets">0</b><small>subcategorías con pedido</small></div>
+</div>
+<div class="toolbar"><div id="resultTitle" style="font-weight:850">Sin datos todavía</div><input class="search" id="search" placeholder="Buscar artículo, ID o subcategoría"></div>
+<div class="tablewrap"><table class="table"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+<div class="notice">Las cantidades numéricas se suman. Las cantidades especiales (por ejemplo, tallas) se conservan literalmente y se muestran sin convertirlas en una suma engañosa. Los días salen del nombre del archivo.</div>
+</div>
+</main>
+</div>
+</div>
+
+<script>
+const DEPTS=["SNACK","COCINA","PATIO","RIVERA","PISOS","RESTAURANTE","YARABAR","LAVANDERÍA","SERVICIO TÉCNICO","OTROS"];
+let selectedDept="SNACK", selectedFiles=[], records=[], days=[];
+
+const $=id=>document.getElementById(id);
+function norm(v){return String(v??"").replace(/\s+/g," ").trim()}
+function key(v){return norm(v).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function number(v){if(typeof v==="number"&&isFinite(v))return v;let s=norm(v).replace(",",".");return /^-?\d+(?:\.\d+)?$/.test(s)?Number(s):null}
+function deptFromFile(name){
+ const n=key(name);
+ if(n.includes("SNACK"))return "SNACK";
+ if(n.includes("COCINA"))return "COCINA";
+ if(n.includes("PATIO"))return "PATIO";
+ if(n.includes("RIVERA"))return "RIVERA";
+ if(n.includes("PISO"))return "PISOS";
+ if(n.includes("RESTAURANTE"))return "RESTAURANTE";
+ if(n.includes("YARABAR"))return "YARABAR";
+ if(n.includes("LAVAND"))return "LAVANDERÍA";
+ if(n.includes("SERVICIO TECNICO"))return "SERVICIO TÉCNICO";
+ return "OTROS";
+}
+function dateFromFile(name){
+ const n=norm(name);
+ let m=n.match(/(?:^|[ _-])(\d{1,2})[.-](\d{1,2})(?:[.-](\d{2,4}))?/);
+ if(!m)return null;
+ return String(m[1]).padStart(2,"0")+"/"+String(m[2]).padStart(2,"0")+(m[3]?"/"+m[3]:"");
+}
+function dateSort(a,b){
+ const p=x=>{let z=x.split("/");return new Date((z[2]?z[2]:"2026"),Number(z[1])-1,Number(z[0]))};
+ return p(a)-p(b);
+}
+function headerInfo(rows){
+ let best=null;
+ for(let r=0;r<Math.min(rows.length,30);r++){
+  const row=rows[r]||[], h=row.map(key);
+  let ref=-1, qty=-1, id=-1, name=-1, unit=-1;
+  h.forEach((v,c)=>{
+   if(v==="CODIGO"||v==="ID"||v.startsWith("CODIGO ")) id=c;
+   if(v.includes("REFERENCIA")) ref=c;
+   if(v==="NOMBRE ARTICULO"||v==="NOMBRE DEL ARTICULO"||v==="ARTICULO") name=c;
+   if(v==="PEDIDO"||v==="CANTIDAD"||v==="UNIDADES"||v==="UDS"||v==="CANT"||v.startsWith("PEDIDO ")) qty=c;
+   if(v.includes("UD. MEDIDA")||v==="UD MEDIDA"||v==="UNIDAD") unit=c;
+  });
+  let label=ref>=0?ref:name;
+  // Cocina/ECONOMATO: the quantity header may be blank, immediately between article and unit.
+  if(qty<0 && name>=0 && unit>=0 && unit>name) qty=name+1;
+  if(label>=0 && qty>=0){
+    let score=10+(id>=0?2:0)+(ref>=0?2:0)+(name>=0?2:0)+(unit>=0?1:0);
+    if(!best||score>best.score)best={row:r,id,label,qty,score};
+  }
+ }
+ return best;
+}
+function parseQuantity(v){
+ const raw=norm(v);
+ if(!raw||raw==="0"||raw==="0,0"||raw==="0.0")return {num:0,text:"",special:false,has:false};
+ const n=number(raw);
+ if(n!==null)return {num:n,text:String(n),special:false,has:n>0};
+ // Preserve special order strings, while extracting numeric total only when useful.
+ const nums=[...raw.matchAll(/\d+(?:[.,]\d+)?/g)].map(m=>Number(m[0].replace(",","."))).filter(isFinite);
+ return {num:nums.length?nums.reduce((a,b)=>a+b,0):0,text:raw,special:true,has:nums.length>0};
+}
+async function readFile(file){
+ return new Promise((resolve,reject)=>{
+  const fr=new FileReader();
+  fr.onload=e=>{
+   try{
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
+    const dept=deptFromFile(file.name), day=dateFromFile(file.name), out=[];
+    wb.SheetNames.forEach(sheet=>{
+     const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,defval:"",raw:true});
+     const hi=headerInfo(rows);
+     if(!hi)return;
+     for(let r=hi.row+1;r<rows.length;r++){
+      const row=rows[r]||[];
+      const ref=norm(row[hi.label]), id=hi.id>=0?norm(row[hi.id]):"";
+      if(!ref)continue;
+      const q=parseQuantity(row[hi.qty]);
+      if(!q.has)continue;
+      out.push({dept,day,source:file.name,sheet:sheet,id,ref,qty:q.num,text:q.text,special:q.special});
+     }
+    });
+    resolve({file:file.name,dept,day,records:out,sheets:wb.SheetNames.length});
+   }catch(err){reject(new Error(file.name+": "+err.message))}
+  };
+  fr.onerror=()=>reject(new Error("No se pudo leer "+file.name));
+  fr.readAsArrayBuffer(file);
+ });
+}
+function renderDepts(){
+ $("depts").innerHTML=DEPTS.map(d=>`<div class="dept ${d===selectedDept?"active":""}" data-d="${esc(d)}"><span>${esc(d)}</span><span class="badge">${records.filter(r=>r.dept===d).length||0}</span></div>`).join("");
+ document.querySelectorAll(".dept").forEach(el=>el.onclick=()=>{selectedDept=el.dataset.d;renderDepts();});
+}
+function renderFiles(){
+ $("filesList").innerHTML=selectedFiles.map(f=>`<span class="file">${esc(f.name)}</span>`).join("");
+}
+function status(msg,type="ok"){ $("status").innerHTML=msg?`<div class="status ${type}">${msg}</div>`:""; }
+function aggregate(){
+ const map=new Map();
+ for(const r of records){
+  const k=(r.id?key(r.id)+"|":"")+key(r.ref)+"|"+key(r.sheet);
+  if(!map.has(k))map.set(k,{id:r.id,ref:r.ref,sheet:r.sheet,days:{},total:0,texts:[],special:false});
+  const x=map.get(k);
+  if(!x.days[r.day])x.days[r.day]={num:0,texts:[]};
+  if(r.special){x.days[r.day].texts.push(r.text);x.special=true}else{x.days[r.day].num+=r.qty;x.total+=r.qty}
+ }
+ return [...map.values()].sort((a,b)=>a.ref.localeCompare(b.ref,"es"));
+}
+function fmt(n){return Number.isInteger(n)?String(n):n.toLocaleString("es-ES",{maximumFractionDigits:2})}
+function render(){
+ const data=aggregate(), q=key($("search").value);
+ const filtered=data.filter(x=>!q||key(x.ref).includes(q)||key(x.id).includes(q)||key(x.sheet).includes(q));
+ const ds=[...new Set(records.map(r=>r.day).filter(Boolean))].sort(dateSort);
+ $("sItems").textContent=data.length; $("sUnits").textContent=fmt(data.reduce((s,x)=>s+x.total,0)); $("sDays").textContent=ds.length;
+ $("sSheets").textContent=new Set(records.map(r=>r.sheet)).size;
+ $("weekLabel").textContent=ds.length?`${ds[0]} → ${ds[ds.length-1]}`:"Sin archivos";
+ $("resultTitle").textContent=`${selectedDept} · ${data.length} artículos agrupados`;
+ $("thead").innerHTML=`<tr><th>Artículo</th><th>Subcategoría / recogida</th>${ds.map(d=>`<th>${d}</th>`).join("")}<th>TOTAL</th></tr>`;
+ $("tbody").innerHTML=filtered.length?filtered.map(x=>`<tr>
+  <td><div class="ref">${esc(x.ref)}</div>${x.id?`<div class="muted">ID ${esc(x.id)}</div>`:""}</td>
+  <td><span class="pill">${esc(x.sheet)}</span></td>
+  ${ds.map(d=>{let v=x.days[d];if(!v)return "<td class='muted'>—</td>";let t=v.texts.length?v.texts.join(" + "):fmt(v.num);return `<td class='daycell'>${esc(t)}</td>`}).join("")}
+  <td class="qty">${x.special&&x.total===0?"VER DETALLE":fmt(x.total)}</td>
+ </tr>`).join(""):`<tr><td colspan="${3+ds.length}" class="empty">No hay resultados para este filtro.</td></tr>`;
+}
+async function process(){
+ if(!selectedFiles.length){status("Selecciona primero los archivos del departamento.","warn");return}
+ const wrong=selectedFiles.filter(f=>deptFromFile(f.name)!==selectedDept);
+ if(wrong.length){status(`Hay ${wrong.length} archivo(s) cuyo nombre no corresponde a <b>${esc(selectedDept)}</b>. Puedes quitarlos o cambiar de departamento.`,"warn");return}
+ status(`Analizando ${selectedFiles.length} archivos y todas sus pestañas…`);
+ try{
+  const parsed=[];for(const f of selectedFiles)parsed.push(await readFile(f));
+  records=parsed.flatMap(x=>x.records);
+  const totalSheets=parsed.reduce((s,x)=>s+x.sheets,0);
+  const usedSheets=new Set(records.map(r=>r.sheet));
+  const noOrders=parsed.filter(x=>x.records.length===0).map(x=>x.file);
+  status(`✓ ${parsed.length} archivos leídos · ${records.length} líneas con pedido · ${usedSheets.size} subcategorías con pedido · ${totalSheets} pestañas revisadas.${noOrders.length?` ${noOrders.length} archivo(s) no tienen pedidos en este día.`:""}`,"ok");
+  renderDepts();render();
+ }catch(e){status("Error: "+esc(e.message),"err")}
+}
+$("drop").onclick=()=>$("files").click();
+$("files").onchange=e=>{selectedFiles=Array.from(e.target.files);renderFiles();status("")};
+$("drop").ondragover=e=>{e.preventDefault();$("drop").style.background="#f0f4ff"};
+$("drop").ondragleave=()=>{$("drop").style.background=""};
+$("drop").ondrop=e=>{e.preventDefault();$("drop").style.background="";selectedFiles=Array.from(e.dataTransfer.files);renderFiles()};
+$("process").onclick=process;
+$("clear").onclick=()=>{selectedFiles=[];records=[];$("files").value="";renderFiles();status("");render()};
+$("search").oninput=render;
+renderDepts();render();
+</script>
+</body>
+</html>
