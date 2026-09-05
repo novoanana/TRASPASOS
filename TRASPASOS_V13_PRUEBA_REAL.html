@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRASPASOS · Agrupador semanal</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#718096;--line:#e6ebf2;--accent:#2457ff;--good:#0d9b68;--warn:#d88700;--danger:#d83b45;--shadow:0 14px 38px rgba(31,43,77,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#eef3ff 0,#f7f9fc 40%,#f4f7fb);color:var(--text)}
+.app{max-width:1480px;margin:auto;padding:26px}
+header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:22px}.brand{display:flex;gap:13px;align-items:center}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#2457ff,#6c63ff);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:0 9px 24px rgba(36,87,255,.22)}h1{margin:0;font-size:27px;letter-spacing:-.7px}header p{margin:4px 0 0;color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:11px;font-weight:800;cursor:pointer}.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.danger{color:var(--danger)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.kpi{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:var(--shadow)}.label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:850}.value{font-size:27px;font-weight:950;margin-top:5px}.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.grid{display:grid;grid-template-columns:1fr 1.6fr;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:19px;box-shadow:var(--shadow)}.card h2{font-size:16px;margin:0 0 14px}.controls{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:850;color:var(--muted);margin-bottom:6px}.field select,.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fbfcfe;font:inherit;color:var(--text)}
+.drop{margin-top:12px;border:1.5px dashed #b9c5db;border-radius:15px;padding:28px;text-align:center;background:#fafcff;cursor:pointer}.drop strong{display:block;margin-bottom:5px;font-size:16px}.drop small{color:var(--muted)}.upload-files{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.file-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#fbfcff;font-size:11px;font-weight:750}.file-chip.ok{border-color:#a9dfcb;background:#f4fffa}.file-chip.warn{border-color:#f0d39c;background:#fffaf0}
+.status{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f6f8fc;font-size:12px}.status.good{background:#eaf9f2;color:#08764d}.status.warn{background:#fff7e5;color:#916000}.status.error{background:#fff0f1;color:#a5222c}
+.weekhead{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:12px}.weektitle{font-size:18px;font-weight:900}.weektitle small{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-top:3px}.weeknav{display:flex;gap:7px}.iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 11px;font-weight:900;cursor:pointer}
+.daygrid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.day{padding:10px;border:1px solid var(--line);border-radius:12px;background:#f9fbff}.day.loaded{border-color:#a9dfcb;background:#effbf6}.day .top{display:flex;justify-content:space-between;font-weight:850;font-size:10px}.day .date{font-size:15px;font-weight:950;margin-top:5px}.day .qty{font-size:10px;color:var(--muted);margin-top:3px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:19px 0 11px}.pill{font-size:10px;padding:5px 8px;border-radius:999px;background:#eef2ff;color:#3650bd;font-weight:850}.search{padding:10px 12px;border:1px solid var(--line);border-radius:10px;min-width:250px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:10px 11px;border-bottom:1px solid var(--line);font-size:12px;text-align:left;white-space:nowrap}th{background:#f8faff;color:#667188;font-size:10px;text-transform:uppercase;letter-spacing:.06em}th.num,td.num{text-align:right}td.total{font-weight:950;background:#fbfcff}.fridayHead{background:#fff8e8!important;color:#946000!important}.fridayCell{background:#fffdf7}.empty{text-align:center;padding:34px;color:var(--muted)}.audit{margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5}.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:11px}.small-note{font-size:11px;color:var(--muted)}.import-preview{margin-top:12px;border:1px solid var(--line);border-radius:13px;background:#fbfcff;overflow:hidden}.import-preview-head{padding:10px 12px;border-bottom:1px solid var(--line);font-size:11px;font-weight:850}.import-preview-body{max-height:260px;overflow:auto;padding:8px 12px}.import-line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #edf0f5;font-size:11px}.import-line:last-child{border-bottom:0}.import-line small{display:block;color:var(--muted);margin-top:2px}
+.dept-section{margin-top:18px}.dept-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}.dept-title b{font-size:14px}.subcat{display:inline-flex;margin:2px 3px 2px 0}
+.economato-card{margin-top:16px}.pending-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.pending-title{font-size:18px;font-weight:950;margin:0}.pending-sub{font-size:11px;color:var(--muted);margin-top:3px}.pending-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pending-list{display:grid;gap:9px}.pending-row{display:grid;grid-template-columns:1.25fr 1.25fr .75fr .75fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:#fbfcff}.pending-row:hover{border-color:#c9d5f7}.pending-main b{display:block;font-size:13px}.pending-main span,.pending-meta span{display:block;color:var(--muted);font-size:11px;margin-top:3px}.pending-meta strong{font-size:13px}.pending-empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed #c9d3e5;border-radius:13px}.pending-error{padding:12px;border-radius:10px;background:#fff0f1;color:#a5222c;font-size:12px}.detail-panel{margin-top:14px;border:1px solid var(--line);border-radius:15px;background:#fff;overflow:hidden}.detail-head{padding:15px 16px;background:#f8faff;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}.detail-head h3{margin:0;font-size:16px}.detail-head small{display:block;color:var(--muted);margin-top:3px}.detail-close{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer;font-weight:900}.validation-table{width:100%;border-collapse:collapse}.validation-table th,.validation-table td{padding:10px 11px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle}.validation-table th{background:#f8faff;color:#667188;font-size:10px;text-transform:uppercase;letter-spacing:.05em}.validation-table td.item-name b{display:block;font-size:12px}.validation-table td.item-name span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.qty-input,.comment-input{width:100%;border:1px solid #ccd5e4;border-radius:9px;background:#fff;padding:8px;font:inherit}.qty-input{text-align:center;max-width:82px}.comment-input{min-width:180px;min-height:38px;resize:vertical}.review-check{width:24px;height:24px;accent-color:var(--good);cursor:pointer}.validation-ok{color:var(--good);font-weight:900}.validation-pending{color:var(--warn);font-weight:900}.validation-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;background:#fbfcff}.validation-progress{font-size:12px;color:var(--muted)}.validation-note{font-size:11px;color:var(--muted);margin-top:5px}.save-draft{font-size:11px;color:var(--good);font-weight:800}
+.printHeader{display:none}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.daygrid{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.app{padding:14px}.kpis{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr}.daygrid{grid-template-columns:repeat(2,1fr)}header{flex-direction:column;align-items:flex-start}.search{min-width:160px}}
+@media(max-width:850px){.pending-row{grid-template-columns:1fr 1fr;gap:8px}.pending-row .pending-button{grid-column:1/-1}.validation-table{min-width:760px}.detail-panel .tablewrap{overflow:auto}.validation-footer{flex-direction:column;align-items:stretch}}
+@media print{
+ @page{size:landscape;margin:10mm}
+ body{background:#fff}.app{max-width:none;padding:0}
+ header,.kpis,.grid,.economato-card,.search,.actions,.audit,.no-print{display:none!important}
+ .card{box-shadow:none;border:0;padding:0}.printHeader{display:block!important;margin-bottom:12px}
+ #weeklyCard{display:block!important}.tablewrap{border:0;overflow:visible}
+ th,td{font-size:9px;padding:6px 7px}.dept-section{break-inside:avoid;margin-top:12px}.dept-section table{break-inside:avoid}
+}
+
+/* ===== V12 · RESUMEN EJECUTIVO ===== */
+.v12-hero{position:relative;overflow:hidden;margin-bottom:18px;padding:24px 26px;border-radius:24px;background:linear-gradient(135deg,#15224a 0%,#254edb 58%,#5e6dff 100%);color:#fff;box-shadow:0 18px 45px rgba(35,65,150,.20)}
+.v12-hero:after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;right:-90px;top:-150px;background:rgba(255,255,255,.10)}
+.v12-hero h2{position:relative;z-index:1;font-size:25px;margin:0 0 5px;letter-spacing:-.5px}
+.v12-hero p{position:relative;z-index:1;margin:0;color:rgba(255,255,255,.78);font-size:13px}
+.v12-hero-meta{position:relative;z-index:1;display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.v12-chip{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:850}
+.v12-executive{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin-top:14px}
+.v12-exec-card{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.13);border-radius:15px;padding:12px}
+.v12-exec-card small{display:block;color:rgba(255,255,255,.68);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:850}
+.v12-exec-card b{display:block;font-size:20px;margin-top:4px}
+.v12-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn.excel{background:#0b8f65;color:#fff;border-color:#0b8f65}
+.btn.print{background:#fff;color:#1e3fba;border-color:#dbe3ff}
+.v12-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 0 15px}
+.v12-summary-card{border:1px solid var(--line);border-radius:15px;padding:13px;background:linear-gradient(180deg,#fff,#fafcff)}
+.v12-summary-card .n{font-size:23px;font-weight:950;display:block}
+.v12-summary-card .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:850}
+.v12-insights{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px;margin-bottom:15px}
+.v12-panel{border:1px solid var(--line);border-radius:15px;padding:14px;background:#fbfcff}
+.v12-panel h3{margin:0 0 9px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#62708a}
+.v12-panel .big{font-size:20px;font-weight:950}
+.v12-list{display:grid;gap:6px}.v12-list-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #edf0f5;font-size:11px}.v12-list-row:last-child{border-bottom:0}.v12-list-row b{font-size:11px}.v12-list-row span{color:var(--muted)}
+.v12-subcat-card{margin-top:12px;border:1px solid var(--line);border-radius:15px;overflow:hidden}.v12-subcat-head{padding:11px 13px;background:#f7f9fd;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#61708a}
+.v12-alert{padding:10px 12px;border-radius:11px;margin-bottom:12px;font-size:11px;font-weight:750}.v12-alert.info{background:#eef4ff;color:#3152a9}.v12-alert.warn{background:#fff7e5;color:#8d6200}
+.v12-footer-note{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:13px;padding:11px 13px;border-radius:11px;background:#f6f8fc;font-size:11px;color:var(--muted)}
+@media(max-width:1100px){.v12-summary-grid{grid-template-columns:repeat(3,1fr)}.v12-insights{grid-template-columns:1fr 1fr}.v12-executive{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.v12-summary-grid,.v12-insights,.v12-executive{grid-template-columns:1fr}.v12-hero{padding:19px}.v12-hero h2{font-size:21px}}
+@media print{
+ .v12-hero{background:#fff!important;color:#111;border:1px solid #bbb;box-shadow:none}.v12-hero:after{display:none}.v12-hero p,.v12-chip{color:#333}.v12-chip{background:#f5f5f5;border-color:#ddd}
+ .v12-tools,.no-print{display:none!important}.v12-summary-grid{grid-template-columns:repeat(5,1fr)}.v12-insights{grid-template-columns:repeat(3,1fr)}
+}
+
+
+@media print{
+  #printHeaderV13{display:block!important;margin-bottom:10px}
+  #printTitleV13{margin:0;font-size:22px}
+  #printWeekV13{margin-top:3px;font-size:12px;color:#555}
+  .v12-hero{break-inside:avoid}
+  #weeklyDepartments{break-inside:auto}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="brand"><div class="logo">T</div><div><h1>TRASPASOS</h1><p>Agrupador semanal de pedidos por departamento</p></div></div>
+ <div class="actions"><button class="btn" onclick="printWeek()">🖨️ Imprimir resultados</button><button class="btn" onclick="clearTraspasos()">Limpiar prueba</button></div>
+</header>
+
+<section class="kpis">
+ <div class="kpi"><div class="label">Total semana</div><div class="value" id="kTotal">0</div><div class="sub">unidades agrupadas</div></div>
+ <div class="kpi"><div class="label">Archivos analizados</div><div class="value" id="kFiles">0</div><div class="sub">solo esta sesión</div></div>
+ <div class="kpi"><div class="label">Artículos</div><div class="value" id="kItems">0</div><div class="sub">agrupados por ID/referencia</div></div>
+ <div class="kpi"><div class="label">Días detectados</div><div class="value" id="kDays">0</div><div class="sub">según los nombres de archivo</div></div>
+</section>
+
+<div class="grid">
+ <div class="card">
+  <h2>1. Departamento y archivos de la semana</h2>
+  <div class="field"><label>Departamento que vas a comprobar</label>
+   <select id="dept">
+    <option>SNACK LA MAREA</option><option>COCINA</option><option>RESTAURANTE</option><option>EL PATIO</option><option>YARABAR</option><option>RIVERA</option><option>PISOS</option><option>LAVANDERÍA</option><option>SERVICIO TÉCNICO</option><option>VENTAS</option><option>RECEPCIÓN</option>
+   </select>
+  </div>
+  <div class="drop" id="drop"><strong>Subir los Excel de la semana</strong><small>Selecciona juntos 01, 02, 03, 04… · XLSX, XLS o CSV</small><input id="file" type="file" accept=".xlsx,.xls,.csv" multiple hidden></div>
+  <div class="upload-files" id="selectedFiles"></div>
+  <button class="btn primary" id="processBtn" style="width:100%;margin-top:11px">Analizar y agrupar</button>
+  <div id="status" class="status">Listo para una prueba. Los archivos no se guardan.</div>
+  <div id="importPreview" class="import-preview" style="display:none"></div>
+  <div class="small-note" style="margin-top:10px">La fecha se obtiene del nombre del archivo. Por ejemplo, <b>SNACK04.09.xlsx</b> se interpreta como 04/09. La semana se calcula como lunes → domingo, aunque solo hayas cargado martes–viernes.</div>
+ </div>
+
+ <div class="card">
+  <div class="weekhead">
+   <div><div class="weektitle" id="weekTitle">Sin semana detectada</div><small>Semana real calculada a partir de los archivos cargados</small></div>
+  </div>
+  <div class="daygrid" id="days"></div>
+  <div id="daySummary" class="import-preview" style="display:none"></div>
+ </div>
+</div>
+
+<div class="card" id="weeklyCard" style="margin-top:16px">
+
+ <div id="printHeaderV13" style="display:none"><h1 id="printTitleV13">TRASPASOS</h1><div id="printWeekV13"></div></div>
+
+ <div class="v12-hero">
+   <h2 id="heroTitle">Resumen ejecutivo · Sin datos</h2>
+   <p id="heroSubtitle">Carga los Excel del departamento para obtener el consolidado semanal.</p>
+   <div class="v12-hero-meta">
+     <span class="v12-chip" id="heroWeek">Semana: —</span>
+     <span class="v12-chip" id="heroFiles">0 archivos</span>
+     <span class="v12-chip" id="heroLines">0 líneas con pedido</span>
+     <span class="v12-chip" id="heroSubs">0 puntos de recogida</span>
+   </div>
+   <div class="v12-executive">
+     <div class="v12-exec-card"><small>Total semanal</small><b id="heroTotal">0 uds.</b></div>
+     <div class="v12-exec-card"><small>Día de mayor carga</small><b id="heroPeakDay">—</b></div>
+     <div class="v12-exec-card"><small>Artículo más solicitado</small><b id="heroTopItem">—</b></div>
+   </div>
+ </div>
+
+ <div class="toolbar no-print">
+   <div><h2 style="margin:0 0 3px">Detalle del consolidado</h2><span class="pill" id="deptPill">SIN DATOS</span></div>
+   <div class="v12-tools">
+     <input class="search" id="search" placeholder="Buscar ID, referencia o subcategoría…">
+     <button class="btn excel" id="downloadExcelBtn" type="button">📥 Descargar Excel</button>
+     <button class="btn print" id="printResultsBtn" type="button">🖨️ Imprimir</button>
+   </div>
+ </div>
+
+ <div class="v12-summary-grid">
+   <div class="v12-summary-card"><span class="n" id="sumArticles">0</span><span class="l">Artículos distintos</span></div>
+   <div class="v12-summary-card"><span class="n" id="sumUnits">0</span><span class="l">Unidades numéricas</span></div>
+   <div class="v12-summary-card"><span class="n" id="sumDays">0</span><span class="l">Días con archivo</span></div>
+   <div class="v12-summary-card"><span class="n" id="sumSubs">0</span><span class="l">Subcategorías</span></div>
+   <div class="v12-summary-card"><span class="n" id="sumSpecial">0</span><span class="l">Pedidos especiales</span></div>
+ </div>
+
+ <div id="v12Insights" class="v12-insights"></div>
+
+ <div id="weeklyDepartments"><div class="empty">Todavía no hay archivos analizados.</div></div>
+
+ <div class="v12-footer-note">
+   <span id="audit">Los archivos se procesan únicamente en esta sesión.</span>
+   <b>Sin base de datos · Sin almacenamiento de los Excel</b>
+ </div>
+</div>
+
+<!-- PEDIDOS ECONOMATO: SE MANTIENE SEPARADO Y CON SU BACKEND -->
+<div class="card economato-card" id="economatoSection">
+ <div class="pending-toolbar">
+  <div><h2 class="pending-title">Pedidos del Economato</h2><div class="pending-sub">Pedidos pendientes de revisión y validación</div></div>
+  <div class="pending-actions"><span class="pill" id="pendingCount">0 pendientes</span><button class="btn" onclick="loadPendingOrders()">↻ Actualizar pedidos</button></div>
+ </div>
+ <div id="pendingStatus" class="status">Conectando con el backend…</div>
+ <div id="pendingList" class="pending-list" style="margin-top:10px"></div>
+ <div id="orderDetail" class="detail-panel" style="display:none">
+  <div class="detail-head"><div><h3 id="detailTitle">Pedido</h3><small id="detailSubtitle"></small></div><button class="detail-close" onclick="closeOrderDetail()">Cerrar</button></div>
+  <div class="tablewrap" style="border:0;border-radius:0"><table class="validation-table">
+   <thead><tr><th>ARTÍCULO</th><th>SOLICITADO</th><th>SERVIDO</th><th>COMENTARIO</th><th>REVISADO</th></tr></thead>
+   <tbody id="detailBody"></tbody>
+  </table></div>
+  <div class="validation-footer">
+   <div><div class="validation-progress" id="validationProgress">0/0 artículos revisados</div><div class="validation-note">Marca cada artículo cuando hayas terminado de revisarlo, aunque la cantidad servida sea 0.</div><div class="save-draft" id="draftStatus"></div></div>
+   <button class="btn primary" id="validateOrderBtn" onclick="validateCurrentOrder()" disabled>✓ VALIDAR PEDIDO</button>
+  </div>
+ </div>
+</div>
+</div>
+
+<script>
+/* =========================================================
+   TRASPASOS · SOLO MEMORIA DE LA SESIÓN
+   No se usa localStorage, backend ni base de datos para los Excel.
+   Al recargar la página los archivos desaparecen.
+   ========================================================= */
+const WEEKDAYS=["LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO","DOMINGO"];
+let selectedFiles=[];
+let parsedFiles=[];
+let weeklyRows=[];
+let detectedDates=[];
+
+const $=id=>document.getElementById(id);
+function normalize(v){return String(v??"").replace(/\s+/g," ").trim()}
+function clean(v){return normalize(v).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function fmt(n){return Number(n||0).toLocaleString("es-ES",{maximumFractionDigits:2})}
+function key(v){return clean(v)}
+function monday(d){d=new Date(d.getFullYear(),d.getMonth(),d.getDate());let n=d.getDay();d.setDate(d.getDate()+(n===0?-6:1-n));return d}
+function sunday(d){let x=new Date(d);x.setDate(x.getDate()+6);return x}
+function dateLabel(d){return new Intl.DateTimeFormat("es-ES",{day:"2-digit",month:"2-digit"}).format(d)}
+function fullDate(d){return new Intl.DateTimeFormat("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}).format(d)}
+function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+
+function dateFromFilename(name){
+ const n=normalize(name);
+ // Acepta SNACK04.09.xlsx, SNACK 04.09.xlsx, SNACK-04.09.xlsx, etc.
+ // No interpreta ".2" de nombres como SNACK 01.09.2 como año.
+ const matches=[...n.matchAll(/(\d{1,2})[._-](\d{1,2})(?:[._-](\d{4}|\d{2}))?/g)];
+ if(!matches.length)return null;
+ // Preferimos la primera pareja día/mes válida.
+ for(const m of matches){
+   const day=Number(m[1]), month=Number(m[2]);
+   if(day>=1&&day<=31&&month>=1&&month<=12){
+     let year=m[3]?Number(m[3]):new Date().getFullYear();
+     if(year<100)year+=2000;
+     // Si no hay año, usamos el año actual; suficiente para las pruebas.
+     const d=new Date(year,month-1,day);
+     if(d.getFullYear()===year&&d.getMonth()===month-1&&d.getDate()===day)return d;
+   }
+ }
+ return null;
+}
+function deptFromFilename(name){
+ const n=clean(String(name||"")).replace(/\.[^.]+$/,"").trim();
+ const compact=n.replace(/[^A-Z0-9ÁÉÍÓÚÜÑ]/g,"");
+ if(n.startsWith("SNACK")||compact.startsWith("SNACK"))return "SNACK LA MAREA";
+ if(n.startsWith("COCINA")||compact.startsWith("COCINA"))return "COCINA";
+ if(n.includes("RESTAURANTE"))return "RESTAURANTE";
+ if(n.includes("PATIO"))return "EL PATIO";
+ if(n.includes("YARABAR"))return "YARABAR";
+ if(n.includes("RIVERA"))return "RIVERA";
+ if(n.startsWith("PISO")||n.startsWith("PISOS")||compact.startsWith("PISO"))return "PISOS";
+ if(n.includes("LAVANDERIA"))return "LAVANDERÍA";
+ if(n.includes("SERVICIO TECNICO"))return "SERVICIO TÉCNICO";
+ if(n.includes("VENTAS"))return "VENTAS";
+ if(n.includes("RECEPCION"))return "RECEPCIÓN";
+ return null;
+}
+function headerScore(v,type){
+ const h=clean(v); if(!h)return 0;
+ if(type==="id")return ["ID","CODIGO","CODIGO ARTICULO"].includes(h)||/^ID\b/.test(h)||/^CODIGO\b/.test(h)?8:0;
+ if(type==="ref")return h==="REFERENCIA"?12:(h.includes("REFERENCIA")?10:(h.includes("NOMBRE")&&h.includes("ARTIC")?9:(["ARTICULO","ARTÍCULO"].includes(h)?9:0)));
+ if(type==="qty"){
+   if(["PEDIDO","CANTIDAD","UNIDADES","UDS","CANT","CANT."].includes(h))return 14;
+   if(h.includes("CANTIDAD"))return 12;
+   if(h.startsWith("PEDIDO"))return 12;
+   if(h.includes("UNIDADES")||h.includes("UD"))return 7;
+ }
+ return 0;
+}
+function findHeader(rows){
+ let best=null;
+ for(let r=0;r<Math.min(rows.length,60);r++){
+   const row=rows[r]||[];let id=-1,ref=-1,qty=-1,si=0,sr=0,sq=0;
+   row.forEach((v,c)=>{let a=headerScore(v,"id"),b=headerScore(v,"ref"),q=headerScore(v,"qty");if(a>si){si=a;id=c}if(b>sr){sr=b;ref=c}if(q>sq){sq=q;qty=c}});
+   // Caso Cocina/Economato: si hay nombre de artículo + unidad y no hay encabezado de pedido,
+   // la columna inmediatamente posterior al artículo puede ser la cantidad.
+   if(qty<0&&ref>=0){
+     for(let c=ref+1;c<Math.min(row.length,ref+4);c++){
+       const h=clean(row[c]); if(h==="UD MEDIDA"||h==="UD. MEDIDA"||h==="UNIDAD"||h==="UNIDAD MEDIDA"){qty=c-1;break}
+     }
+   }
+   if(ref>=0&&qty>=0){
+     let score=sr+sq+(si?4:0);
+     const spread=Math.max(ref,qty,Math.max(id,0))-Math.min(ref,qty,Math.max(id,0));
+     if(spread<=8)score+=2;
+     if(!best||score>best.score)best={row:r,id,ref,qty,score};
+   }
+ }
+ return best;
+}
+function parseQuantity(v){
+ const raw=normalize(v);
+ if(!raw||raw==="0"||raw==="0,0"||raw==="0.0")return {num:0,text:"",special:false,has:false};
+ const direct=raw.replace(",",".");
+ if(/^-?\d+(?:\.\d+)?$/.test(direct)){
+   const n=Number(direct);return {num:Number.isFinite(n)?n:0,text:raw,special:false,has:Number.isFinite(n)&&n>0};
+ }
+ // "2 cajas", "2 ud", etc.
+ const one=raw.match(/^\s*(\d+(?:[.,]\d+)?)\s*(?:ud|uds|unidades?|cajas?|bultos?|botellas?|kg|litros?|l)?\b/i);
+ if(one){
+   const n=Number(one[1].replace(",","."));return {num:Number.isFinite(n)?n:0,text:raw,special:true,has:Number.isFinite(n)&&n>0};
+ }
+ // Conservamos pedidos complejos, pero no los sumamos como si fueran unidades simples.
+ return {num:0,text:raw,special:true,has:true};
+}
+function parseSheet(rows,sheet,file,department,date){
+ const hi=findHeader(rows);if(!hi)return {rows:[],reason:"No se encontró una cabecera reconocible."};
+ const out=[];
+ for(let r=hi.row+1;r<rows.length;r++){
+   const row=rows[r]||[];if(row.every(x=>normalize(x)===""))continue;
+   const ref=normalize(row[hi.ref]);const id=hi.id>=0?normalize(row[hi.id]):"";
+   const q=parseQuantity(row[hi.qty]);
+   if(!ref||!q.has)continue;
+   out.push({id,ref,qty:q.num,qtyText:q.text,special:q.special,department,subcategory:normalize(sheet)||"SIN SUBCATEGORÍA",date,sourceFile:file,sourceSheet:sheet,row:r+1});
+ }
+ return {rows:out,reason:"",headerRow:hi.row+1};
+}
+function readWorkbook(file){
+ return new Promise((resolve,reject)=>{
+  const fr=new FileReader();
+  fr.onload=e=>{
+   try{
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
+    const department=deptFromFilename(file.name),date=dateFromFilename(file.name);
+    const result={file:file.name,department,date,sheets:[],rows:[]};
+    if(!department)result.error="Departamento no identificado por el nombre del archivo.";
+    if(!date)result.error=(result.error?result.error+" ":"")+"Fecha no identificada en el nombre.";
+    wb.SheetNames.forEach(sheet=>{
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,defval:"",raw:true});
+      const p=(department&&date)?parseSheet(rows,sheet,file.name,department,date):{rows:[],reason:"Falta departamento o fecha.",headerRow:-1};
+      result.sheets.push({name:sheet,count:p.rows.length,reason:p.reason,headerRow:p.headerRow});
+      result.rows.push(...p.rows);
+    });
+    resolve(result);
+   }catch(err){reject(new Error(file.name+": "+err.message))}
+  };
+  fr.onerror=()=>reject(new Error("No se pudo leer "+file.name));
+  fr.readAsArrayBuffer(file);
+ });
+}
+function setStatus(t,c=""){const s=$("status");s.className="status "+c;s.textContent=t}
+function showSelectedFiles(){
+ $("selectedFiles").innerHTML=selectedFiles.map(f=>{
+   const d=dateFromFilename(f.name),dep=deptFromFilename(f.name);
+   return `<span class="file-chip ${d&&dep?"ok":"warn"}">${esc(f.name)}${d?` · ${dateLabel(d)}`:" · ⚠ sin fecha"}${dep?` · ${esc(dep)}`:" · ⚠ sin depto"}</span>`;
+ }).join("");
+}
+async function analyze(){
+ if(!selectedFiles.length){setStatus("Selecciona primero los archivos.","warn");return}
+ setStatus(`Analizando ${selectedFiles.length} archivos y todas sus pestañas…`);
+ try{
+   const parsed=[];for(const f of selectedFiles)parsed.push(await readWorkbook(f));
+   const chosen=$("dept").value;
+   const mismatched=parsed.filter(x=>x.department&&x.department!==chosen);
+   if(mismatched.length){
+     setStatus(`Has seleccionado ${chosen}, pero ${mismatched.length} archivo(s) pertenecen a otro departamento. Para esta prueba carga solo los archivos de ${chosen}.`,"warn");
+     parsedFiles=parsed; renderPreview(); return;
+   }
+   const bad=parsed.filter(x=>x.error), rows=parsed.flatMap(x=>x.rows);
+   if(bad.length){setStatus(`${bad.length} archivo(s) necesitan revisión: ${bad.map(x=>x.file).join(", ")}`,"warn")}
+   parsedFiles=parsed;weeklyRows=rows;detectedDates=[...new Map(rows.filter(r=>r.date).map(r=>[iso(r.date),r.date])).values()].sort((a,b)=>a-b);
+   renderPreview();renderAll();
+   if(!bad.length)setStatus(`✓ ${parsed.length} archivos leídos · ${rows.length} líneas con pedido · ${new Set(rows.map(r=>r.subcategory)).size} subcategorías con pedido.`,"good");
+ }catch(e){setStatus("Error: "+e.message,"error")}
+}
+function renderPreview(){
+ const p=$("importPreview");p.style.display="block";
+ p.innerHTML=`<div class="import-preview-head">Vista previa · ${parsedFiles.length} archivos</div><div class="import-preview-body">
+ ${parsedFiles.map(f=>`<div class="import-line"><div><b>${esc(f.file)}</b><small>${f.department?esc(f.department):"⚠ departamento no identificado"} · ${f.date?fullDate(f.date):"⚠ fecha no identificada"}</small><small>${f.sheets.map(s=>`${esc(s.name)}: ${s.count} líneas`).join(" · ")}</small></div><strong>${f.rows.length}</strong></div>`).join("")}
+ </div>`;
+}
+function aggregate(){
+ const map=new Map();
+ for(const r of weeklyRows){
+   const k=(r.id?"ID:"+key(r.id):"REF:"+key(r.ref));
+   if(!map.has(k))map.set(k,{id:r.id,ref:r.ref,total:0,days:{},subs:{},specials:[]});
+   const x=map.get(k);
+   const day=iso(r.date);
+   if(!x.days[day])x.days[day]={num:0,texts:[],lines:0};
+   x.days[day].lines++;
+   if(r.special&&r.qty===0){
+     x.days[day].texts.push(r.qtyText);
+     x.specials.push({date:r.date,text:r.qtyText,subcategory:r.subcategory});
+   }else{
+     x.days[day].num+=r.qty;
+     x.total+=r.qty;
+   }
+   const sk=r.subcategory||"SIN SUBCATEGORÍA";
+   if(!x.subs[sk])x.subs[sk]={num:0,texts:[],lines:0};
+   x.subs[sk].lines++;
+   if(r.special&&r.qty===0)x.subs[sk].texts.push(r.qtyText);
+   else x.subs[sk].num+=r.qty;
+ }
+ return [...map.values()].sort((a,b)=>key(a.ref).localeCompare(key(b.ref),"es"));
+}
+function getWeekInfo(){
+ if(!detectedDates.length)return null;
+ const st=monday(detectedDates[0]);
+ const en=new Date(st);
+ en.setDate(en.getDate()+6);
+ return {start:st,end:en};
+}
+function getDayStats(){
+ const map=new Map();
+ for(const r of weeklyRows){
+   const k=iso(r.date);
+   if(!map.has(k))map.set(k,{date:r.date,lines:0,units:0});
+   const x=map.get(k);x.lines++;x.units+=r.qty;
+ }
+ return [...map.values()].sort((a,b)=>a.date-b.date);
+}
+function renderInsights(items){
+ const days=getDayStats();
+ const subMap=new Map();
+ weeklyRows.forEach(r=>{
+   const k=r.subcategory||"SIN SUBCATEGORÍA";
+   if(!subMap.has(k))subMap.set(k,{lines:0,units:0});
+   subMap.get(k).lines++;subMap.get(k).units+=r.qty;
+ });
+ const topSubs=[...subMap.entries()].sort((a,b)=>b[1].units-a[1].units);
+ const topItems=[...items].filter(x=>x.total>0).sort((a,b)=>b.total-a.total).slice(0,5);
+ const peak=[...days].sort((a,b)=>b.units-a.units)[0];
+ const special=weeklyRows.filter(r=>r.special&&r.qty===0);
+ $("v12Insights").innerHTML=`
+  <div class="v12-panel">
+   <h3>📅 Carga diaria</h3>
+   <div class="v12-list">${days.map(d=>`<div class="v12-list-row"><b>${WEEKDAYS[d.date.getDay()===0?6:d.date.getDay()-1]} ${dateLabel(d.date)}</b><span>${fmt(d.units)} uds. · ${d.lines} líneas</span></div>`).join("")||'<div class="small-note">Sin datos</div>'}</div>
+  </div>
+  <div class="v12-panel">
+   <h3>📍 Puntos de recogida</h3>
+   <div class="v12-list">${topSubs.slice(0,6).map(([s,v])=>`<div class="v12-list-row"><b>${esc(s)}</b><span>${fmt(v.units)} uds. · ${v.lines} líneas</span></div>`).join("")||'<div class="small-note">Sin datos</div>'}</div>
+  </div>
+  <div class="v12-panel">
+   <h3>🏆 Más solicitados</h3>
+   <div class="v12-list">${topItems.map((x,i)=>`<div class="v12-list-row"><b>${i+1}. ${esc(x.ref)}</b><span>${fmt(x.total)} uds.</span></div>`).join("")||'<div class="small-note">Sin unidades numéricas</div>'}</div>
+  </div>`;
+ $("heroPeakDay").textContent=peak?`${dateLabel(peak.date)} · ${fmt(peak.units)} uds.`:"—";
+ $("heroTopItem").textContent=topItems[0]?`${topItems[0].ref} · ${fmt(topItems[0].total)}`:"—";
+ $("sumSpecial").textContent=special.length;
+}
+function renderAll(){
+ const items=aggregate(),q=key($("search").value||"");
+ const filtered=items.filter(x=>!q||key(x.ref).includes(q)||key(x.id).includes(q)||Object.keys(x.subs).some(s=>key(s).includes(q)));
+ const total=weeklyRows.reduce((s,r)=>s+r.qty,0);
+ const special=weeklyRows.filter(r=>r.special&&r.qty===0).length;
+ const subcats=new Set(weeklyRows.map(r=>r.subcategory||"SIN SUBCATEGORÍA"));
+ $("kTotal").textContent=fmt(total);
+ $("kFiles").textContent=parsedFiles.length;
+ $("kItems").textContent=items.length;
+ $("kDays").textContent=detectedDates.length;
+ $("deptPill").textContent=$("dept").value;
+ $("heroTitle").textContent=`Resumen ejecutivo · ${$("dept").value}`;
+ $("heroSubtitle").textContent=`Consolidado semanal de pedidos · ${items.length} artículos distintos y ${fmt(total)} unidades numéricas`;
+ $("heroFiles").textContent=`${parsedFiles.length} archivos`;
+ $("heroLines").textContent=`${weeklyRows.length} líneas con pedido`;
+ $("heroSubs").textContent=`${subcats.size} puntos de recogida`;
+ $("heroTotal").textContent=`${fmt(total)} uds.`;
+ $("sumArticles").textContent=items.length;$("sumUnits").textContent=fmt(total);$("sumDays").textContent=detectedDates.length;$("sumSubs").textContent=subcats.size;$("sumSpecial").textContent=special;
+ const wi=getWeekInfo();
+ if(wi){
+   $("weekTitle").textContent=`${fullDate(wi.start)} → ${fullDate(wi.end)}`;
+   $("heroWeek").textContent=`Semana: ${dateLabel(wi.start)} → ${dateLabel(wi.end)}`;
+   $("printTitleV13").textContent=`TRASPASOS · ${$("dept").value}`;
+   $("printWeekV13").textContent=`Semana: ${fullDate(wi.start)} → ${fullDate(wi.end)}`;
+ }else{
+   $("weekTitle").textContent="Sin semana detectada";$("heroWeek").textContent="Semana: —";
+ }
+ const first=wi?wi.start:null;
+ $("days").innerHTML=first?WEEKDAYS.map((name,i)=>{
+   const d=new Date(first);d.setDate(d.getDate()+i);const keyd=iso(d),used=detectedDates.some(x=>iso(x)===keyd);
+   const dayRows=weeklyRows.filter(r=>iso(r.date)===keyd);const units=dayRows.reduce((s,r)=>s+r.qty,0);
+   return `<div class="day ${used?"loaded":""}"><div class="top"><span>${name}</span><span>${used?"✓":"—"}</span></div><div class="date">${dateLabel(d)}</div><div class="qty">${used?`${fmt(dayRows.length)} líneas · ${fmt(units)} uds.`:"Sin archivo"}</div></div>`;
+ }).join(""):"";
+ renderInsights(items);
+ if(!filtered.length){$("weeklyDepartments").innerHTML='<div class="empty">No hay artículos con pedido para este filtro.</div>';return}
+ const dates=detectedDates.map(d=>iso(d));
+ const rowsHtml=filtered.map(x=>`<tr>
+  <td>${x.id?`<b>${esc(x.id)}</b>`:"—"}</td><td><b>${esc(x.ref)}</b></td>
+  <td>${Object.entries(x.subs).map(([s,v])=>`<span class="file-chip subcat">${esc(s)} · ${v.num?fmt(v.num):esc(v.texts.join(" + "))}</span>`).join("")}</td>
+  ${dates.map(d=>{const v=x.days[d];if(!v)return `<td class="num">—</td>`;return `<td class="num">${v.num?fmt(v.num):esc(v.texts.join(" + "))}</td>`}).join("")}
+  <td class="num total">${x.total?fmt(x.total):(x.specials.length?"VER DETALLE":"0")}</td>
+ </tr>`).join("");
+ $("weeklyDepartments").innerHTML=`
+ <div class="dept-section">
+   <div class="dept-title"><b>${esc($("dept").value)}</b><span class="pill">${fmt(total)} unidades numéricas · ${items.length} artículos</span></div>
+   ${special?`<div class="v12-alert warn">⚠️ Hay ${special} pedido(s) con formato especial (por ejemplo, tallas o texto). Se conservan literalmente y no se convierten en una suma numérica.</div>`:""}
+   <div class="tablewrap"><table><thead><tr><th>ID</th><th>REFERENCIA</th><th>SUBCATEGORÍAS / RECOGIDA</th>${detectedDates.map(d=>`<th class="num">${dateLabel(d)}</th>`).join("")}<th class="num">TOTAL</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+ </div>`;
+ $("audit").innerHTML=`${parsedFiles.length} archivos analizados · ${weeklyRows.length} líneas con pedido · ${detectedDates.length} días cargados · ${items.length} artículos distintos · <b>${fmt(total)}</b> unidades numéricas · ${subcats.size} subcategorías/puntos de recogida.`;
+}
+function buildExcel(){
+ const items=aggregate(), dates=detectedDates.map(d=>iso(d)), wi=getWeekInfo(), dept=$("dept").value;
+ const wb=XLSX.utils.book_new();
+ const total=weeklyRows.reduce((s,r)=>s+r.qty,0);
+ const subsCount=new Set(weeklyRows.map(r=>r.subcategory||"SIN SUBCATEGORÍA")).size;
+ const specialRows=weeklyRows.filter(r=>r.special&&r.qty===0);
+
+ const summary=[
+   ["TRASPASOS · RESUMEN SEMANAL"],
+   ["Departamento",dept],
+   ["Semana",wi?`${fullDate(wi.start)} → ${fullDate(wi.end)}`:""],
+   ["Archivos analizados",parsedFiles.length],
+   ["Días detectados",detectedDates.length],
+   ["Artículos distintos",items.length],
+   ["Unidades numéricas",total],
+   ["Subcategorías / puntos de recogida",subsCount],
+   ["Pedidos especiales",specialRows.length],
+   [],
+   ["Día","Líneas con pedido","Unidades numéricas"]
+ ];
+ getDayStats().forEach(d=>summary.push([fullDate(d.date),d.lines,d.units]));
+
+ const detail=[["ID","REFERENCIA","SUBCATEGORÍA / RECOGIDA",...detectedDates.map(d=>dateLabel(d)),"TOTAL"]];
+ items.forEach(x=>detail.push([
+   x.id||"",
+   x.ref,
+   Object.entries(x.subs).map(([s,v])=>`${s}: ${v.num || v.texts.join(" + ")}`).join(" | "),
+   ...dates.map(d=>{const v=x.days[d];return v?(v.num||v.texts.join(" + ")):""}),
+   x.total||""
+ ]));
+
+ const subMap=new Map();
+ weeklyRows.forEach(r=>{
+   const s=r.subcategory||"SIN SUBCATEGORÍA";
+   if(!subMap.has(s))subMap.set(s,{lines:0,units:0,specials:[]});
+   const v=subMap.get(s);v.lines++;v.units+=r.qty;
+   if(r.special&&r.qty===0)v.specials.push(r.qtyText);
+ });
+ const subs=[["SUBCATEGORÍA / RECOGIDA","LÍNEAS","UNIDADES NUMÉRICAS","PEDIDOS ESPECIALES"],...(
+   [...subMap.entries()].sort((a,b)=>b[1].units-a[1].units)
+   .map(([s,v])=>[s,v.lines,v.units,v.specials.join(" | ")])
+ )];
+
+ const files=[["ARCHIVO","FECHA","DEPARTAMENTO","LÍNEAS CON PEDIDO","PESTAÑAS REVISADAS"],...parsedFiles.map(f=>[
+   f.file,f.date?fullDate(f.date):"",f.department||"",f.rows.length,f.sheets.length
+ ])];
+
+ const specials=[["ARCHIVO","FECHA","SUBCATEGORÍA","ID","REFERENCIA","PEDIDO ORIGINAL"],...specialRows.map(r=>[
+   r.source,r.date?fullDate(r.date):"",r.subcategory,r.id||"",r.ref,r.qtyText
+ ])];
+
+ const sheets=[["ARCHIVO","PESTAÑA","LÍNEAS CON PEDIDO","FILAS DE DATOS REVISADAS"],...parsedFiles.flatMap(f=>
+   f.sheets.map(s=>[f.file,s.name,s.count,s.rawRowCount])
+ )];
+
+ for(const [name,data] of [
+   ["Resumen",summary],
+   ["Detalle",detail],
+   ["Por día",getDayStats().map((d,i)=>i===0?["DÍA","FECHA","LÍNEAS","UNIDADES"]: [WEEKDAYS[d.date.getDay()===0?6:d.date.getDay()-1],fullDate(d.date),d.lines,d.units])],
+   ["Recogida",subs],
+   ["Archivos",files],
+   ["Especiales",specials],
+   ["Pestañas",sheets]
+ ]){
+   const ws=XLSX.utils.aoa_to_sheet(data);
+   ws["!cols"]=data[0].map((_,i)=>({wch:i===1?34:(i===2?28:20)}));
+   XLSX.utils.book_append_sheet(wb,ws,name);
+ }
+ const stamp=wi?`${iso(wi.start)}_${iso(wi.end)}`:"semana";
+ XLSX.writeFile(wb,`TRASPASOS_${dept.replace(/[^A-Z0-9]+/gi,"_")}_${stamp}.xlsx`);
+}
+function clearTraspasos()function clearTraspasos(){
+ selectedFiles=[];parsedFiles=[];weeklyRows=[];detectedDates=[];$("file").value="";$("selectedFiles").innerHTML="";$("importPreview").style.display="none";$("weeklyDepartments").innerHTML='<div class="empty">Todavía no hay archivos analizados.</div>';$("audit").textContent="";$("weekTitle").textContent="Sin semana detectada";$("deptPill").textContent="SIN DATOS";$("kTotal").textContent="0";$("kFiles").textContent="0";$("kItems").textContent="0";$("kDays").textContent="0";$("days").innerHTML="";setStatus("Prueba limpiada. No había datos guardados.","good");
+}
+function printWeek(){window.print()}
+$("drop").onclick=()=>$("file").click();
+$("file").onchange=e=>{selectedFiles=Array.from(e.target.files||[]);showSelectedFiles();if(selectedFiles.length)analyze();e.target.value=""};
+$("drop").ondragover=e=>{e.preventDefault();$("drop").style.borderColor="var(--accent)"};
+$("drop").ondragleave=()=>$("drop").style.borderColor="";
+$("drop").ondrop=e=>{e.preventDefault();$("drop").style.borderColor="";selectedFiles=Array.from(e.dataTransfer.files||[]).filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));showSelectedFiles();if(selectedFiles.length)analyze()};
+$("processBtn").onclick=analyze;
+$("dept").onchange=()=>{if(selectedFiles.length)analyze()};
+$("search").oninput=renderAll;
+$("downloadExcelBtn").onclick=buildExcel;
+$("printResultsBtn").onclick=printWeek;
+
+/* =========================================================
+   PEDIDOS ECONOMATO · VALIDACIÓN
+   MANTENIDO SEPARADO DEL AGRUPADOR TRASPASOS.
+   ========================================================= */
+const BACKEND_URL="https://script.google.com/macros/s/AKfycbxn3r8myJMkDQ3mxbH0xlrPHkY36RQyy1kfwGe0Jp7iodznHti_5Xy2C70nMjBzpAI/exec";
+let pendingOrders=[],currentOrder=null,currentDetail=[],currentDraft=null;
+function validationStorageKey(pedidoId){return "TRASPASOS_VALIDACION|"+String(pedidoId||"").trim()}
+function loadValidationDraft(pedidoId){try{const raw=localStorage.getItem(validationStorageKey(pedidoId));return raw?JSON.parse(raw):null}catch(e){return null}}
+function saveValidationDraft(){if(!currentOrder||!currentDraft)return;localStorage.setItem(validationStorageKey(currentOrder.pedidoId),JSON.stringify(currentDraft));const el=$("draftStatus");if(el)el.textContent="✓ Cambios guardados en este dispositivo"}
+function clearValidationDraft(pedidoId){localStorage.removeItem(validationStorageKey(pedidoId))}
+function setPendingStatus(text,cls=""){const el=$("pendingStatus");el.className="status "+cls;el.textContent=text}
+async function backendPost(payload){
+ const response=await fetch(BACKEND_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+ const text=await response.text();let data;try{data=JSON.parse(text)}catch(e){throw new Error("El backend no devolvió JSON válido.")}if(!data||data.ok!==true)throw new Error(data?.error||"El backend devolvió un error.");return data;
+}
+function formatBackendDate(value){if(!value)return "";const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);return new Intl.DateTimeFormat("es-ES",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(d)}
+async function loadPendingOrders(){
+ const list=$("pendingList");list.innerHTML='<div class="pending-empty">Cargando pedidos pendientes…</div>';$("pendingCount").textContent="Cargando…";
+ try{const data=await backendPost({accion:"PEDIDOS_PENDIENTES"});pendingOrders=Array.isArray(data.pedidos)?data.pedidos:[];renderPendingOrders();setPendingStatus(pendingOrders.length?"✓ Pedidos pendientes cargados.":"No hay pedidos pendientes.","good")}
+ catch(error){pendingOrders=[];$("pendingCount").textContent="0 pendientes";list.innerHTML=`<div class="pending-error">${esc(error.message)}</div>`;setPendingStatus("No se pudieron cargar los pedidos.","error")}
+}
+function renderPendingOrders(){
+ const list=$("pendingList");$("pendingCount").textContent=`${pendingOrders.length} ${pendingOrders.length===1?"pendiente":"pendientes"}`;
+ if(!pendingOrders.length){list.innerHTML='<div class="pending-empty">No hay pedidos pendientes de validar.</div>';return}
+ list.innerHTML=pendingOrders.map(p=>{const id=esc(p.pedidoId||""),depto=esc(p.departamento||""),fecha=formatBackendDate(p.fecha),total=fmt(Number(p.totalSolicitado)||0),servido=fmt(Number(p.totalServido)||0),safeId=String(p.pedidoId||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");return `<div class="pending-row"><div class="pending-main"><b>${id}</b><span>${depto}</span></div><div class="pending-meta"><strong>${fecha}</strong><span>${esc(p.estado||"PENDIENTE")}</span></div><div class="pending-meta"><strong>${total}</strong><span>solicitado</span></div><div class="pending-meta"><strong>${servido}</strong><span>servido hasta ahora</span></div><button class="btn primary pending-button" onclick="openOrderDetail('${safeId}')">ABRIR PEDIDO</button></div>`}).join("");
+}
+async function openOrderDetail(pedidoId){
+ const panel=$("orderDetail"),body=$("detailBody");panel.style.display="block";body.innerHTML='<tr><td colspan="5" class="empty">Cargando detalle…</td></tr>';panel.scrollIntoView({behavior:"smooth",block:"start"});
+ try{
+  const data=await backendPost({accion:"DETALLE_PEDIDO",pedidoId}),pedidoData=data?.pedido||data?.resultado||data;
+  currentOrder=pedidoData?.pedido||pedidoData||{pedidoId,departamento:""};
+  currentDetail=Array.isArray(pedidoData?.lineas)?pedidoData.lineas:Array.isArray(data?.lineas)?data.lineas:Array.isArray(data?.pedido?.lineas)?data.pedido.lineas:[];
+  const saved=loadValidationDraft(pedidoId),old=Array.isArray(saved?.lineas)?saved.lineas:[];
+  currentDraft={pedidoId,lineas:currentDetail.map((linea,index)=>{const o=old.find(x=>String(x.idArticulo)===String(linea.idArticulo)&&Number(x.index)===index)||old.find(x=>String(x.idArticulo)===String(linea.idArticulo));return {index,idArticulo:linea.idArticulo,cantidadServida:o?Number(o.cantidadServida)||0:Number(linea.cantidadServida)||0,comentarioValidacion:o?String(o.comentarioValidacion||""):String(linea.comentarioValidacion||""),revisado:o?o.revisado===true:false}})};
+  saveValidationDraft();renderOrderDetail();
+ }catch(error){body.innerHTML=`<tr><td colspan="5" class="empty">${esc(error.message)}</td></tr>`;$("draftStatus").textContent=""}
+}
+function renderOrderDetail(){
+ if(!currentOrder)return;$("detailTitle").textContent=`Pedido ${currentOrder.pedidoId||""}`;$("detailSubtitle").textContent=`${currentOrder.departamento||""} · ${formatBackendDate(currentOrder.fecha)}`;
+ if(!currentDetail.length){$("detailBody").innerHTML='<tr><td colspan="5" class="empty">El pedido se ha cargado, pero el backend no devolvió líneas de detalle.</td></tr>';updateValidationProgress();return}
+ $("detailBody").innerHTML=currentDetail.map((linea,index)=>{const draft=currentDraft.lineas[index],rev=!!draft.revisado;return `<tr><td class="item-name"><b>${esc(linea.referencia||"")}</b><span>${esc(linea.categoria||"")} · ID ${esc(linea.idArticulo||"")}</span></td><td><b>${fmt(Number(linea.cantidadSolicitada)||0)}</b></td><td><input class="qty-input" type="number" min="0" step="1" value="${Number(draft.cantidadServida)||0}" onchange="updateServed(${index},this.value)" oninput="updateServed(${index},this.value)"></td><td><textarea class="comment-input" placeholder="Comentario para este artículo…" onchange="updateValidationComment(${index},this.value)" oninput="updateValidationComment(${index},this.value)">${esc(draft.comentarioValidacion||"")}</textarea></td><td style="text-align:center"><input class="review-check" type="checkbox" ${rev?"checked":""} onchange="toggleReviewed(${index},this.checked)"></td></tr>`}).join("");updateValidationProgress();
+}
+function updateServed(index,value){if(!currentDraft?.lineas?.[index])return;let n=Number(value);if(!Number.isFinite(n)||n<0)n=0;n=Math.floor(n);currentDraft.lineas[index].cantidadServida=n;saveValidationDraft()}
+function updateValidationComment(index,value){if(!currentDraft?.lineas?.[index])return;currentDraft.lineas[index].comentarioValidacion=String(value||"");saveValidationDraft()}
+function toggleReviewed(index,checked){if(!currentDraft?.lineas?.[index])return;currentDraft.lineas[index].revisado=!!checked;saveValidationDraft();updateValidationProgress()}
+function updateValidationProgress(){if(!currentDraft)return;const total=currentDraft.lineas.length,reviewed=currentDraft.lineas.filter(x=>x.revisado).length,complete=total>0&&reviewed===total;$("validationProgress").innerHTML=`<b>${reviewed}/${total}</b> artículos revisados · `+(complete?`<span class="validation-ok">✓ Todos revisados</span>`:`<span class="validation-pending">Pendientes: ${total-reviewed}</span>`);$("validateOrderBtn").disabled=!complete}
+async function validateCurrentOrder(){
+ if(!currentOrder||!currentDraft)return;const total=currentDraft.lineas.length,reviewed=currentDraft.lineas.filter(x=>x.revisado).length;if(total===0||reviewed!==total){alert("Debes revisar todos los artículos antes de validar el pedido.");return}
+ const button=$("validateOrderBtn");saveValidationDraft();button.disabled=true;button.textContent="VALIDANDO…";
+ try{
+  const lineas=currentDetail.map((linea,index)=>({idArticulo:linea.idArticulo,referencia:linea.referencia,cantidadServida:Number(currentDraft.lineas[index].cantidadServida)||0,comentarioValidacion:String(currentDraft.lineas[index].comentarioValidacion||""),revisado:true}));
+  const data=await backendPost({accion:"VALIDAR_PEDIDO",pedidoId:currentOrder.pedidoId,lineas});clearValidationDraft(currentOrder.pedidoId);alert(`✓ Pedido ${currentOrder.pedidoId} validado correctamente.\n\nEl departamento ya puede recibir la confirmación.`);currentOrder=null;currentDetail=[];currentDraft=null;$("orderDetail").style.display="none";await loadPendingOrders();if(data)setPendingStatus("✓ Pedido validado correctamente.","good")
+ }catch(error){button.disabled=false;button.textContent="✓ VALIDAR PEDIDO";saveValidationDraft();alert("No se pudo validar el pedido:\n\n"+error.message)}
+}
+function closeOrderDetail(){$("orderDetail").style.display="none";currentOrder=null;currentDetail=[];currentDraft=null}
+
+renderAll();
+loadPendingOrders();
+</script>
+</body>
+</html>
